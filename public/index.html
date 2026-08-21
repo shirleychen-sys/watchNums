@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>淘宝库存监控小工具</title>
+  <link rel="icon" href="data:," />
+  <script src="/vendor/vue.global.prod.js"></script>
+  <script src="/vendor/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f6fb; --card: #ffffff; --line: #e6e9f0; --text: #1f2733;
+      --muted: #8a93a3; --primary: #2f6fed; --danger: #e74c3c; --ok: #27ae60;
+      --warn: #d46b08;
+      --shadow: 0 2px 10px rgba(20, 30, 60, .06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      background: var(--bg); color: var(--text); font-size: 14px;
+    }
+    header {
+      display: flex; align-items: center; gap: 18px;
+      padding: 14px 26px; background: var(--card); border-bottom: 1px solid var(--line);
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 { font-size: 17px; margin: 0; font-weight: 700; }
+    header .sub { color: var(--muted); font-size: 12px; }
+    nav { margin-left: auto; display: flex; gap: 8px; }
+    nav button {
+      border: 1px solid var(--line); background: #fff; color: var(--text);
+      padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: .15s;
+    }
+    nav button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .wrap { max-width: 1180px; margin: 22px auto; padding: 0 22px; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+    .stat {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 16px 18px; box-shadow: var(--shadow);
+    }
+    .stat .k { color: var(--muted); font-size: 12px; }
+    .stat .v { font-size: 26px; font-weight: 700; margin-top: 6px; }
+    .stat.danger .v { color: var(--danger); }
+    .stat.warn .v { color: var(--warn); }
+    .stat.alert .v { color: var(--danger); }
+    .panel {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 18px; box-shadow: var(--shadow); margin-bottom: 18px;
+    }
+    .panel h2 { font-size: 15px; margin: 0 0 14px; display: flex; align-items: center; gap: 10px; }
+    .panel h2 .tip { color: var(--muted); font-weight: 400; font-size: 12px; }
+    .toolbar { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      border: none; background: var(--primary); color: #fff; padding: 8px 18px;
+      border-radius: 8px; cursor: pointer; font-size: 14px;
+    }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .btn.ghost { background: #eef2fb; color: var(--primary); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
+    th { color: var(--muted); font-weight: 600; background: #fafbfe; }
+    tbody tr:hover { background: #f7f9ff; }
+    tbody tr.row-zero { background: #fdecec; }
+    tbody tr.row-zero:hover { background: #fbdede; }
+    tbody tr.row-zero td.stock { color: var(--danger); font-weight: 700; }
+    tbody tr.row-below { background: #fff7e6; }
+    tbody tr.row-below:hover { background: #ffefd4; }
+    tbody tr.row-below td.stock { color: var(--warn); font-weight: 700; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; }
+    .badge.zero { background: #fdecea; color: var(--danger); }
+    .badge.low { background: #fff0e0; color: var(--warn); }
+    .badge.ok { background: #e9f7ef; color: var(--ok); }
+    .muted { color: var(--muted); }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; color: var(--muted); margin-bottom: 6px; font-size: 13px; }
+    .field input {
+      width: 320px; max-width: 100%; padding: 9px 12px; border: 1px solid var(--line);
+      border-radius: 8px; font-size: 14px;
+    }
+    .field .hint { color: var(--muted); font-size: 12px; margin-top: 5px; }
+    .inline { display: flex; gap: 26px; flex-wrap: wrap; }
+    .inline .field { margin-bottom: 6px; }
+    .toast {
+      position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+      background: #1f2733; color: #fff; padding: 10px 20px; border-radius: 10px;
+      font-size: 14px; z-index: 50; box-shadow: var(--shadow);
+    }
+    .search-input { width: 240px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+    .chk { display: inline-flex; align-items: center; gap: 5px; color: var(--text); font-size: 13px; cursor: pointer; user-select: none; }
+    .chk input { width: 15px; height: 15px; cursor: pointer; }
+    .pager { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .pager button {
+      border: 1px solid var(--line); background: #fff; color: var(--text);
+      padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+    .pager button:disabled { opacity: .5; cursor: default; }
+    .pager .info { color: var(--muted); font-size: 13px; }
+    .pager select { padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+    .jump-input { width: 64px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+    .actionbar { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .actionbar .btn { margin-left: auto; }
+    small.code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div>
+        <h1>📦 淘宝库存监控小工具</h1>
+        <div class="sub">本机运行 · 库存低于「近30天销量×系数」或库存为 0 时标红 + 记报警 · 定时拉取</div>
+      </div>
+      <nav>
+        <button :class="{ active: tab==='dashboard' }" @click="switchTab('dashboard')">库存看板</button>
+        <button :class="{ active: tab==='settings' }" @click="switchTab('settings')">设置</button>
+      </nav>
+    </header>
+
+    <!-- ============ 库存看板 ============ -->
+    <div class="wrap" v-show="tab==='dashboard'">
+      <div class="cards">
+        <div class="stat"><div class="k">监控物件总数</div><div class="v">{{ inventory.length }}</div></div>
+        <div class="stat danger"><div class="k">零库存商品</div><div class="v">{{ zeroItems.length }}</div></div>
+        <div class="stat warn"><div class="k">低于30天销量</div><div class="v">{{ lowItems.length }}</div></div>
+        <div class="stat"><div class="k">上次检查时间</div><div class="v" style="font-size:15px;font-weight:600;margin-top:10px">{{ fmtTime(lastCheck) }}</div></div>
+      </div>
+
+      <!-- 全局操作条 -->
+      <div class="actionbar">
+        <label class="chk"><input type="checkbox" v-model="onlyActive" /> 仅看有销量的在售品</label>
+        <span class="info" v-if="onlyActive">已隐藏 {{ inventory.length - activeCount }} 条无销量商品</span>
+        <button class="btn" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
+      </div>
+
+      <!-- 预警表一：零库存 -->
+      <div class="panel">
+        <h2>
+          <span style="color:var(--danger)">🚫 零库存商品</span>
+          <span class="tip">（库存数量 = 0，红色标识；共 {{ zeroItems.length }} 条）</span>
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>仓库</th><th>规格属性</th><th>规格商家编码</th>
+              <th>库存</th><th>近30天销量</th><th>预警线</th><th>标识</th><th>单价</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!pagedZero.length"><td colspan="9" class="muted" style="text-align:center;padding:18px">🎉 当前没有零库存商品</td></tr>
+            <tr v-for="it in pagedZero" :key="it.id" class="row-zero">
+              <td>{{ it.warehouse }}</td>
+              <td>{{ it.title }}</td>
+              <td class="muted">{{ it.sku }}</td>
+              <td class="stock">{{ it.stock }}</td>
+              <td>{{ it.sales30 }}</td>
+              <td>{{ it.warnLine }}</td>
+              <td><span class="badge zero">零库存</span></td>
+              <td>¥{{ it.price }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pager">
+          <button :disabled="zeroPage<=1" @click="zeroPage--">上一页</button>
+          <span class="info">第 {{ zeroPage }} / {{ zeroTotalPages }} 页 · 共 {{ zeroItems.length }} 条</span>
+          <button :disabled="zeroPage>=zeroTotalPages" @click="zeroPage++">下一页</button>
+          <span class="info">每页</span>
+          <select v-model.number="zeroSize">
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+          <span class="info">条</span>
+          <span class="info">跳至</span>
+          <input class="jump-input" type="number" min="1" :max="zeroTotalPages" v-model.number="zeroJump" @keyup.enter="goZero" />
+          <button @click="goZero">跳转</button>
+        </div>
+      </div>
+
+      <!-- 预警表二：低于30天销量 -->
+      <div class="panel">
+        <h2>
+          <span style="color:var(--warn)">⚠️ 低于30天销量商品</span>
+          <span class="tip">（库存 &gt; 0 且 &lt; 近30天销量×系数，橙色标识；共 {{ lowItems.length }} 条）</span>
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>仓库</th><th>规格属性</th><th>规格商家编码</th>
+              <th>库存</th><th>近30天销量</th><th>预警线</th><th>标识</th><th>单价</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!pagedLow.length"><td colspan="9" class="muted" style="text-align:center;padding:18px">🎉 当前没有低于30天销量的商品</td></tr>
+            <tr v-for="it in pagedLow" :key="it.id" class="row-below">
+              <td>{{ it.warehouse }}</td>
+              <td>{{ it.title }}</td>
+              <td class="muted">{{ it.sku }}</td>
+              <td class="stock">{{ it.stock }}</td>
+              <td>{{ it.sales30 }}</td>
+              <td>{{ it.warnLine }}</td>
+              <td><span class="badge low">低于销量</span></td>
+              <td>¥{{ it.price }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pager">
+          <button :disabled="lowPage<=1" @click="lowPage--">上一页</button>
+          <span class="info">第 {{ lowPage }} / {{ lowTotalPages }} 页 · 共 {{ lowItems.length }} 条</span>
+          <button :disabled="lowPage>=lowTotalPages" @click="lowPage++">下一页</button>
+          <span class="info">每页</span>
+          <select v-model.number="lowSize">
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+          <span class="info">条</span>
+          <span class="info">跳至</span>
+          <input class="jump-input" type="number" min="1" :max="lowTotalPages" v-model.number="lowJump" @keyup.enter="goLow" />
+          <button @click="goLow">跳转</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 设置 ============ -->
+    <div class="wrap" v-show="tab==='settings'">
+      <div class="panel">
+        <h2>全局设置</h2>
+        <div class="inline">
+          <div class="field">
+            <label>全局预警系数（库存 &lt; 近30天销量 × 系数 即报警，默认 1）</label>
+            <input type="number" step="0.1" min="0" v-model="settings.globalFactor" />
+            <div class="hint">系数 = 1：库存不足覆盖近30天销量即警告；&lt;1 更宽松，&gt;1 更严格；0 = 关闭预警</div>
+          </div>
+          <div class="field">
+            <label>检查频率（分钟，默认 60）</label>
+            <input type="number" min="1" v-model="settings.frequencyMinutes" />
+            <div class="hint">保存后调度器会按新频率重建</div>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <button class="btn" @click="saveSettings">保存设置</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>通知配置 <span class="tip">（留空 = 仅记录不发送；演示阶段默认空）</span></h2>
+        <div class="field">
+          <label>邮箱通知（收件地址）</label>
+          <input type="text" v-model="settings.notifications.email" placeholder="ops@example.com" />
+          <div class="hint">真实发送还需在启动环境配置 SMTP_HOST / SMTP_USER / SMTP_PASS / SMTP_FROM</div>
+        </div>
+        <div class="field">
+          <label>微信通知（PushPlus token 或 Server酱 key）</label>
+          <input type="text" v-model="settings.notifications.wechat" placeholder="PushPlus token / sctpxxxx" />
+          <div class="hint">以 <span class="code">sctp</span> 开头识别为 Server酱，其余按 PushPlus 处理</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" v-if="toast">{{ toast }}</div>
+  </div>
+
+  <script>
+    const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+
+    createApp({
+      setup() {
+        const tab = ref('dashboard');
+        const inventory = ref([]);
+        const lastCheck = ref(null);
+        const globalFactor = ref(1);
+        const checking = ref(false);
+        const toast = ref('');
+
+        // 预警分类：零库存 与 低于30天销量 互斥（零库存优先）
+        // onlyActive：仅看有销量的在售品（sales30 > 0），用于隐藏测试/未上架的无销量 规格商家编码
+        const onlyActive = ref(true);
+        const isActive = (it) => it.sales30 > 0;
+        const activeCount = computed(() => inventory.value.filter(isActive).length);
+        const zeroItems = computed(() =>
+          inventory.value.filter(it => it.stock === 0 && (!onlyActive.value || isActive(it))));
+        const lowItems = computed(() =>
+          inventory.value.filter(it => it.stock > 0 && it.below && (!onlyActive.value || isActive(it))));
+        // 兼容旧接口返回字段 belowCount（两类之和）
+        const belowCount = computed(() => zeroItems.value.length + lowItems.value.length);
+
+        // 零库存表：分页 + 跳页
+        const zeroSize = ref(20);
+        const zeroPage = ref(1);
+        const zeroTotalPages = computed(() => Math.max(1, Math.ceil(zeroItems.value.length / zeroSize.value)));
+        const pagedZero = computed(() =>
+          zeroItems.value.slice((zeroPage.value - 1) * zeroSize.value, zeroPage.value * zeroSize.value));
+
+        // 低于30天销量表：分页
+        const lowSize = ref(20);
+        const lowPage = ref(1);
+        const lowTotalPages = computed(() => Math.max(1, Math.ceil(lowItems.value.length / lowSize.value)));
+        const pagedLow = computed(() =>
+          lowItems.value.slice((lowPage.value - 1) * lowSize.value, lowPage.value * lowSize.value));
+
+        // 跳转到指定页（钳制到合法范围）
+        const zeroJump = ref(1);
+        const lowJump = ref(1);
+        function jumpTo(jumpRef, maxRef, pageRef) {
+          let n = Math.floor(Number(jumpRef.value));
+          if (!Number.isFinite(n) || n < 1) n = 1;
+          if (n > maxRef.value) n = maxRef.value;
+          pageRef.value = n;
+          jumpRef.value = n;
+        }
+        function goZero() { jumpTo(zeroJump, zeroTotalPages, zeroPage); }
+        function goLow() { jumpTo(lowJump, lowTotalPages, lowPage); }
+
+        // 数据变化后，把越界的分页钳回合法范围
+        watch([zeroTotalPages, zeroPage], () => { if (zeroPage.value > zeroTotalPages.value) zeroPage.value = zeroTotalPages.value; });
+        watch([lowTotalPages, lowPage], () => { if (lowPage.value > lowTotalPages.value) lowPage.value = lowTotalPages.value; });
+        // 切换「仅看有销量的在售品」时，两张表均回到第一页
+        watch(onlyActive, () => { zeroPage.value = 1; lowPage.value = 1; });
+
+        const settings = reactive({
+          globalFactor: 1,
+          frequencyMinutes: 60,
+          notifications: { email: '', wechat: '' }
+        });
+
+        let pollTimer = null;
+
+        async function api(url, opts) {
+          const r = await fetch(url, opts);
+          return r.json();
+        }
+
+        function fmtTime(ts) {
+          if (!ts) return '—';
+          return new Date(ts).toLocaleString('zh-CN', { hour12: false });
+        }
+
+        function showToast(msg) {
+          toast.value = msg;
+          setTimeout(() => { toast.value = ''; }, 2500);
+        }
+
+        async function loadInventory() {
+          const data = await api('/api/inventory');
+          inventory.value = data.inventory || [];
+          lastCheck.value = data.lastCheck;
+          globalFactor.value = data.globalFactor;
+          belowCount.value = data.belowCount;
+        }
+
+        async function loadSettings() {
+          const data = await api('/api/settings');
+          settings.globalFactor = data.globalFactor;
+          settings.frequencyMinutes = data.frequencyMinutes;
+          settings.notifications = data.notifications || { email: '', wechat: '' };
+        }
+
+        async function checkNow() {
+          checking.value = true;
+          try {
+            const data = await api('/api/check-now', { method: 'POST' });
+            await loadInventory();
+            const n = (data.newAlerts || []).length;
+            showToast(n ? `检查完成，新增 ${n} 条报警/恢复` : '检查完成，无状态变化');
+          } finally {
+            checking.value = false;
+          }
+        }
+
+        async function saveSettings() {
+          const norm = (v, def, min) => {
+            if (v === '' || v == null) return def;
+            const n = Number(v);
+            return Number.isFinite(n) && n >= min ? n : def;
+          };
+          const gf = norm(settings.globalFactor, 1, 0);
+          const fm = norm(settings.frequencyMinutes, 60, 1);
+          const payload = {
+            globalFactor: gf,
+            frequencyMinutes: fm,
+            notifications: settings.notifications
+          };
+          await api('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          settings.globalFactor = gf;
+          settings.frequencyMinutes = fm;
+          await loadInventory();
+          showToast('设置已保存');
+        }
+
+        function switchTab(t) {
+          tab.value = t;
+          if (t === 'settings') loadSettings();
+        }
+
+        onMounted(() => {
+          loadInventory();
+          pollTimer = setInterval(() => { loadInventory(); }, 30000);
+        });
+
+        return {
+          tab, inventory, lastCheck, globalFactor, belowCount, checking, toast,
+          zeroItems, lowItems, onlyActive, activeCount,
+          zeroSize, zeroPage, zeroTotalPages, pagedZero, zeroJump, goZero,
+          lowSize, lowPage, lowTotalPages, pagedLow, lowJump, goLow,
+          settings,
+          fmtTime, checkNow, saveSettings, switchTab
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

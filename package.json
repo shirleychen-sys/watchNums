@@ -1,0 +1,12 @@
+{
+  "name": "taobao-inventory-monitor",
+  "version": "1.0.0",
+  "description": "本机运行的淘宝库存监控小工具（Vue3 + Express + ECharts）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
