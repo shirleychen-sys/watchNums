@@ -56,6 +56,7 @@
     }
     .btn:disabled { opacity: .55; cursor: default; }
     .btn.ghost { background: #eef2fb; color: var(--primary); }
+    .btn.ghost.on { background: var(--primary); color: #fff; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
     th { color: var(--muted); font-weight: 600; background: #fafbfe; }
@@ -98,6 +99,10 @@
     .pager select { padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
     .jump-input { width: 64px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
     .actionbar { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .banner { padding: 10px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin: 0 0 16px; }
+    .banner.mock { background: #fff7e6; color: var(--warn); border: 1px solid #ffd591; }
+    .banner.error { background: #fdecea; color: var(--danger); border: 1px solid #f5c6c2; }
+    .banner code { background: #fff; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
     .actionbar .btn { margin-left: auto; }
     small.code { font-family: ui-monospace, Menlo, Consolas, monospace; }
   </style>
@@ -111,9 +116,14 @@
       </div>
       <nav>
         <button :class="{ active: tab==='dashboard' }" @click="switchTab('dashboard')">库存看板</button>
+        <button :class="{ active: tab==='changes' }" @click="switchTab('changes')">变化记录</button>
         <button :class="{ active: tab==='settings' }" @click="switchTab('settings')">设置</button>
       </nav>
     </header>
+
+    <div class="banner error" v-if="source==='error'">
+      ❌ 真实 ERP 拉取失败：{{ errMsg || '未知错误' }}。当前显示为<span v-if="inventory.length">上次成功拉取的数据</span><span v-else>空数据</span>，请检查 Cookie / 接口配置后重启 <code>server.js</code>。
+    </div>
 
     <!-- ============ 库存看板 ============ -->
     <div class="wrap" v-show="tab==='dashboard'">
@@ -127,12 +137,18 @@
       <!-- 全局操作条 -->
       <div class="actionbar">
         <label class="chk"><input type="checkbox" v-model="onlyActive" /> 仅看有销量的在售品</label>
-        <span class="info" v-if="onlyActive">已隐藏 {{ inventory.length - activeCount }} 条无销量商品</span>
+        <span class="info" v-if="onlyActive">已隐藏 {{ inventory.length - activeCount }} 条无销量/未上架商品</span>
         <button class="btn" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
       </div>
 
+      <!-- 明细子 tab 切换：零库存 / 低于30天销量 -->
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn ghost" :class="{ on: detailTab==='zero' }" @click="detailTab='zero'">🚫 零库存商品 ({{ zeroItems.length }})</button>
+        <button class="btn ghost" :class="{ on: detailTab==='low' }" @click="detailTab='low'">⚠️ 低于30天销量 ({{ lowItems.length }})</button>
+      </div>
+
       <!-- 预警表一：零库存 -->
-      <div class="panel">
+      <div class="panel" v-show="detailTab==='zero'">
         <h2>
           <span style="color:var(--danger)">🚫 零库存商品</span>
           <span class="tip">（库存数量 = 0，红色标识；共 {{ zeroItems.length }} 条）</span>
@@ -140,16 +156,17 @@
         <table>
           <thead>
             <tr>
-              <th>仓库</th><th>规格属性</th><th>规格商家编码</th>
+              <th>商品</th><th>SKU</th><th>类目</th><th>仓库</th>
               <th>库存</th><th>近30天销量</th><th>预警线</th><th>标识</th><th>单价</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!pagedZero.length"><td colspan="9" class="muted" style="text-align:center;padding:18px">🎉 当前没有零库存商品</td></tr>
             <tr v-for="it in pagedZero" :key="it.id" class="row-zero">
-              <td>{{ it.warehouse }}</td>
               <td>{{ it.title }}</td>
               <td class="muted">{{ it.sku }}</td>
+              <td>{{ it.category }}</td>
+              <td>{{ it.warehouse }}</td>
               <td class="stock">{{ it.stock }}</td>
               <td>{{ it.sales30 }}</td>
               <td>{{ it.warnLine }}</td>
@@ -176,7 +193,7 @@
       </div>
 
       <!-- 预警表二：低于30天销量 -->
-      <div class="panel">
+      <div class="panel" v-show="detailTab==='low'">
         <h2>
           <span style="color:var(--warn)">⚠️ 低于30天销量商品</span>
           <span class="tip">（库存 &gt; 0 且 &lt; 近30天销量×系数，橙色标识；共 {{ lowItems.length }} 条）</span>
@@ -184,16 +201,17 @@
         <table>
           <thead>
             <tr>
-              <th>仓库</th><th>规格属性</th><th>规格商家编码</th>
+              <th>商品</th><th>SKU</th><th>类目</th><th>仓库</th>
               <th>库存</th><th>近30天销量</th><th>预警线</th><th>标识</th><th>单价</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!pagedLow.length"><td colspan="9" class="muted" style="text-align:center;padding:18px">🎉 当前没有低于30天销量的商品</td></tr>
             <tr v-for="it in pagedLow" :key="it.id" class="row-below">
-              <td>{{ it.warehouse }}</td>
               <td>{{ it.title }}</td>
               <td class="muted">{{ it.sku }}</td>
+              <td>{{ it.category }}</td>
+              <td>{{ it.warehouse }}</td>
               <td class="stock">{{ it.stock }}</td>
               <td>{{ it.sales30 }}</td>
               <td>{{ it.warnLine }}</td>
@@ -216,6 +234,62 @@
           <span class="info">跳至</span>
           <input class="jump-input" type="number" min="1" :max="lowTotalPages" v-model.number="lowJump" @keyup.enter="goLow" />
           <button @click="goLow">跳转</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 变化记录 ============ -->
+    <div class="wrap" v-show="tab==='changes'">
+      <div class="actionbar">
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost" :class="{ on: changeFilter==='all' }" @click="changeFilter='all'">全部</button>
+          <button class="btn ghost" :class="{ on: changeFilter==='warn' }" @click="changeFilter='warn'">仅预警(跌破/恢复)</button>
+          <button class="btn ghost" :class="{ on: changeFilter==='stock_change' }" @click="changeFilter='stock_change'">仅库存变动</button>
+        </div>
+        <button class="btn" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
+      </div>
+
+      <div class="panel">
+        <h2>🔔 状态变化记录
+          <span class="tip">每次检查自动监控并对比上次快照；共 {{ filteredChanges.length }} 条（按时间倒序）</span>
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>时间</th><th>类型</th><th>商品</th><th>SKU</th><th>仓库</th><th>变化详情</th><th>预警线</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!pagedChanges.length"><td colspan="7" class="muted" style="text-align:center;padding:18px">暂无状态变化记录（点「立即检查」后开始监控）</td></tr>
+            <tr v-for="c in pagedChanges" :key="c.time + c.itemId + c.type" :class="rowCls(c.type)">
+              <td>{{ fmtTime(c.time) }}</td>
+              <td><span :class="['badge', c.type==='alert'?'zero':c.type==='recover'?'ok':'low']">{{ typeLabel(c.type) }}</span></td>
+              <td>{{ c.title }}</td>
+              <td class="muted">{{ c.sku }}</td>
+              <td>{{ c.warehouse }}</td>
+              <td>
+                <template v-if="c.type==='stock_change'">库存 {{ c.from }} → {{ c.to }} <span class="muted">({{ c.to - c.from > 0 ? '+' : '' }}{{ c.to - c.from }})</span></template>
+                <template v-else-if="c.type==='alert'">跌破预警线（库存 {{ c.stock }} &lt; 预警线 {{ c.warnLine }}）</template>
+                <template v-else>已恢复（库存 {{ c.stock }} ≥ 预警线 {{ c.warnLine }}）</template>
+              </td>
+              <td>{{ c.warnLine }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pager">
+          <button :disabled="changePage<=1" @click="changePage--">上一页</button>
+          <span class="info">第 {{ changePage }} / {{ changeTotalPages }} 页 · 共 {{ filteredChanges.length }} 条</span>
+          <button :disabled="changePage>=changeTotalPages" @click="changePage++">下一页</button>
+          <span class="info">每页</span>
+          <select v-model.number="changeSize">
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+          <span class="info">条</span>
+          <span class="info">跳至</span>
+          <input class="jump-input" type="number" min="1" :max="changeTotalPages" v-model.number="changeJump" @keyup.enter="goChange" />
+          <button @click="goChange">跳转</button>
         </div>
       </div>
     </div>
@@ -270,11 +344,15 @@
         const globalFactor = ref(1);
         const checking = ref(false);
         const toast = ref('');
+        const source = ref('erp'); // 'erp' 真实 / 'error' 拉取失败
+        const errMsg = ref(''); // 拉取失败原因（source==='error' 时显示）
 
         // 预警分类：零库存 与 低于30天销量 互斥（零库存优先）
-        // onlyActive：仅看有销量的在售品（sales30 > 0），用于隐藏测试/未上架的无销量 规格商家编码
+        // onlyActive：默认勾选，仅看「有销量的在售品」（activeStatus===1 且 sales30>0），隐藏无销量/未上架 SKU
         const onlyActive = ref(true);
-        const isActive = (it) => it.sales30 > 0;
+        const isActive = (it) => it.active === true && it.sales30 > 0;
+        // 明细子 tab：'zero' 零库存 / 'low' 低于30天销量
+        const detailTab = ref('zero');
         const activeCount = computed(() => inventory.value.filter(isActive).length);
         const zeroItems = computed(() =>
           inventory.value.filter(it => it.stock === 0 && (!onlyActive.value || isActive(it))));
@@ -313,8 +391,8 @@
         // 数据变化后，把越界的分页钳回合法范围
         watch([zeroTotalPages, zeroPage], () => { if (zeroPage.value > zeroTotalPages.value) zeroPage.value = zeroTotalPages.value; });
         watch([lowTotalPages, lowPage], () => { if (lowPage.value > lowTotalPages.value) lowPage.value = lowTotalPages.value; });
-        // 切换「仅看有销量的在售品」时，两张表均回到第一页
-        watch(onlyActive, () => { zeroPage.value = 1; lowPage.value = 1; });
+        // 切换「仅看有销量的在售品」或明细子 tab 时，两张表均回到第一页
+        watch([onlyActive, detailTab], () => { zeroPage.value = 1; lowPage.value = 1; });
 
         const settings = reactive({
           globalFactor: 1,
@@ -345,6 +423,40 @@
           lastCheck.value = data.lastCheck;
           globalFactor.value = data.globalFactor;
           belowCount.value = data.belowCount;
+          source.value = data.source || 'erp';
+          errMsg.value = data.error || '';
+        }
+
+        // 状态变化记录（跌破/恢复 + 库存变动），后端按时间倒序存于 store.alerts
+        async function loadChanges() {
+          const data = await api('/api/alerts');
+          changes.value = data.alerts || [];
+        }
+        const changes = ref([]);
+        const changeFilter = ref('all');
+        const filteredChanges = computed(() => {
+          const list = changes.value || [];
+          if (changeFilter.value === 'all') return list;
+          if (changeFilter.value === 'warn') return list.filter(c => c.type === 'alert' || c.type === 'recover');
+          return list.filter(c => c.type === changeFilter.value);
+        });
+        // 变化记录分页（格式与库存看板表格一致：上一页 / 第 X/Y 页 / 下一页 / 每页 select / 跳至 / 跳转）
+        const changeSize = ref(20);
+        const changePage = ref(1);
+        const changeTotalPages = computed(() => Math.max(1, Math.ceil(filteredChanges.value.length / changeSize.value)));
+        const pagedChanges = computed(() =>
+          filteredChanges.value.slice((changePage.value - 1) * changeSize.value, changePage.value * changeSize.value));
+        const changeJump = ref(1);
+        function goChange() { jumpTo(changeJump, changeTotalPages, changePage); }
+        watch([changeTotalPages, changePage], () => { if (changePage.value > changeTotalPages.value) changePage.value = changeTotalPages.value; });
+        watch([changeFilter, detailTab], () => { changePage.value = 1; changeJump.value = 1; });
+        function typeLabel(t) {
+          if (t === 'alert') return '跌破预警';
+          if (t === 'recover') return '恢复';
+          return '库存变动';
+        }
+        function rowCls(t) {
+          return t === 'alert' ? 'row-zero' : (t === 'recover' ? '' : 'row-below');
         }
 
         async function loadSettings() {
@@ -359,8 +471,9 @@
           try {
             const data = await api('/api/check-now', { method: 'POST' });
             await loadInventory();
+            await loadChanges();
             const n = (data.newAlerts || []).length;
-            showToast(n ? `检查完成，新增 ${n} 条报警/恢复` : '检查完成，无状态变化');
+            showToast(n ? `检查完成，新增 ${n} 条状态变化` : '检查完成，无状态变化');
           } finally {
             checking.value = false;
           }
@@ -393,18 +506,22 @@
         function switchTab(t) {
           tab.value = t;
           if (t === 'settings') loadSettings();
+          if (t === 'changes') loadChanges();
         }
 
         onMounted(() => {
           loadInventory();
-          pollTimer = setInterval(() => { loadInventory(); }, 30000);
+          loadChanges();
+          pollTimer = setInterval(() => { loadInventory(); loadChanges(); }, 30000);
         });
 
         return {
-          tab, inventory, lastCheck, globalFactor, belowCount, checking, toast,
-          zeroItems, lowItems, onlyActive, activeCount,
+          tab, inventory, lastCheck, globalFactor, belowCount, checking, toast, source, errMsg,
+          zeroItems, lowItems, onlyActive, activeCount, detailTab,
           zeroSize, zeroPage, zeroTotalPages, pagedZero, zeroJump, goZero,
           lowSize, lowPage, lowTotalPages, pagedLow, lowJump, goLow,
+          changes, changeFilter, filteredChanges, pagedChanges, typeLabel, rowCls,
+          changeSize, changePage, changeTotalPages, changeJump, goChange,
           settings,
           fmtTime, checkNow, saveSettings, switchTab
         };

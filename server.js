@@ -5,7 +5,7 @@
  *
  * 数据流：
  *   调度器(setInterval) 或 「立即检查」按钮
- *     → checkNow() 拉取库存(真实 ERP / 回退 mock) → 计算每物件预警线(近30天销量×系数) → 与库存比较
+ *     → checkNow() 拉取库存(仅真实 ERP) → 计算每物件预警线(近30天销量×系数) → 与库存比较
  *     → 仅状态变化才记报警(去重防刷屏) → (可选)发通知 → 写 store.json → 前端轮询展示
  */
 
@@ -33,6 +33,8 @@ const DEFAULT_STORE = {
   notifications: { email: '', wechat: '' }, // 通知地址（空 = 不发送）
   itemFactors: {},           // 每物件系数覆盖：{ "P003": 1.2 }
   alerts: [],                // 报警事件
+  source: 'erp',             // 最近一次数据源：'erp' 真实 / 'error' 拉取失败
+  lastError: '',             // 最近一次拉取失败原因（用于前端提示；空=正常）
   lastCheck: null,           // 上次检查时间戳
   belowState: {},            // 各物件当前是否低于预警线：{ "P001": true }
   lastInventory: []          // 最近一次库存快照
@@ -59,57 +61,11 @@ function writeStore(store) {
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
 }
 
-/* ----------------------------- Mock 数据源 ----------------------------- */
-// 格式: [title, category, warehouse, stock]
-const PRODUCTS = [
-  ['纯棉短袖T恤 夏季新款', '女装', '杭州仓', 185],
-  ['宽松休闲裤 直筒', '男装', '广州仓', 320],
-  ['蓝牙耳机 入耳式', '数码', '北京仓', 76],
-  ['保温杯 316不锈钢', '家居', '杭州仓', 540],
-  ['口红 哑光丝绒', '美妆', '广州仓', 132],
-  ['坚果零食大礼包', '食品', '北京仓', 88],
-  ['真丝睡衣 两件装', '女装', '杭州仓', 210],
-  ['运动卫衣 加绒', '男装', '广州仓', 45],
-  ['机械键盘 87键', '数码', '北京仓', 260],
-  ['北欧风台灯', '家居', '杭州仓', 175],
-  ['保湿面霜 50ml', '美妆', '广州仓', 390],
-  ['手冲咖啡豆 500g', '食品', '北京仓', 120],
-  ['雪纺连衣裙', '女装', '杭州仓', 230],
-  ['牛仔外套 复古', '男装', '广州仓', 95],
-  ['智能手环', '数码', '北京仓', 410],
-  ['收纳箱 大号', '家居', '杭州仓', 60],
-  ['防晒喷雾 SPF50', '美妆', '广州仓', 280],
-  ['冻干水果脆', '食品', '北京仓', 150],
-  ['针织开衫', '女装', '杭州仓', 330],
-  ['帆布鞋 经典款', '男装', '广州仓', 70],
-  ['移动电源 20000mAh', '数码', '北京仓', 240],
-  ['香薰蜡烛 礼盒', '家居', '杭州仓', 190],
-  ['精华液 30ml', '美妆', '广州仓', 460],
-  ['每日坚果 30包', '食品', '北京仓', 200]
-];
+/* ----------------------------- 数据源说明 ----------------------------- */
+// 本工具只使用真实 ERP 接口数据（见下方 buildItemFromErp / fetchFromErp）。
+// 真实拉取失败时不会回退任何模拟/演示数据，前端会明确提示「拉取失败」错误。
 
-// 由 PRODUCTS 生成标准物件 { id, sku, title, category, warehouse, stock, price, sales30 }
-const BASE = PRODUCTS.map((p, i) => ({
-  id: 'P' + String(i + 1).padStart(3, '0'),
-  sku: 'SKU' + String(i + 1).padStart(4, '0'),
-  title: p[0],
-  category: p[1],
-  warehouse: p[2],
-  stock: p[3],
-  price: Math.round(29 + ((i * 37) % 470) + ((i * 7) % 40)),
-  sales30: 50 + ((i * 53) % 900)
-}));
-
-// 演示用：围绕基准库存做 ±2% 随机抖动，模拟真实库存波动（首次启动即有多个 <200 物件）
-function mockFetchSource() {
-  return BASE.map(b => {
-    const jitter = 1 + (Math.random() - 0.5) * 0.04;
-    const stock = Math.max(0, Math.round(b.stock * jitter));
-    return { ...b, stock };
-  });
-}
-
-/* ============ 真实 ERP 数据源（可配置；未配置时回退 mock） ============
+/* ============ 真实 ERP 数据源（仅真实数据；拉取失败不再回退任何模拟数据） ============
    接入步骤：
    1) 打开 ERP 网页 → F12 → Network → 刷新库存页 → 找到返回库存列表的那个 XHR/接口（通常是 JSON）
    2) 把它的 URL 填到 .env 的 ERP_API_URL
@@ -134,6 +90,8 @@ function buildItemFromErp(row, i) {
     title: String(pick('propertiesName', 'title', 'itemName', 'goodsName', 'name', 'productName') || ('商品' + (i + 1))),
     category: String(pick('itemCategoryNames', 'itemCategoryName', 'category', 'cat', 'className', 'cateName') || '未分类'),
     warehouse: String(pick('warehouseName', 'warehouse', 'wh', 'depot', 'storage', 'storeName') || '默认仓'),
+    // 是否「在售」：快麦 activeStatus=1 为在售；用于「仅看有销量的在售品」过滤
+    active: Number(pick('activeStatus', 'saleStatus', 'itemStatus', 'status') || 0) === 1,
     // 库存：映射为 sellableNum（可卖数）；无此字段时回退 availableStock 等通用候选
     stock: Number(pick('sellableNum', 'availableStock', 'availableInStock', 'goodStock', 'totalAvailableStock', 'stock', 'qty', 'inventory', 'onHand', 'kc', 'num') || 0),
     price: Number(pick('sellingPrice', 'salePrice', 'price', 'wholesalePrice', 'cost', 'priceNow') || 0),
@@ -271,7 +229,7 @@ async function fetchErpCount(headers, cid, warehouseIds) {
 
 async function fetchFromErp() {
   const url = process.env.ERP_API_URL;
-  if (!url) return null; // 未配置 → 调用方回退 mock
+  if (!url) throw new Error('未配置 ERP_API_URL，无法获取真实数据。请在 .env 配置真实 ERP 接口地址后重启 server.js');
   const headers = {
     'Accept': 'application/json',
     'User-Agent': 'Mozilla/5.0',
@@ -344,6 +302,7 @@ async function fetchFromErp() {
     const json = await res.json();
     // 快麦：{ suc:true, result:1, data:{ total, list:[...] } }；suc=false/result=0 视为登录态失效
     if (json && json.suc === false) throw new Error('ERP 返回 suc=false（登录态可能失效，请重新抓取 Cookie）');
+    if (json && json.result === 901) throw new Error('Cookie 已过期（会话异常，请重新登录），请重新抓取 ERP_COOKIE 到 .env 并重启 server.js');
     if (json && json.result === 0) throw new Error('ERP 返回 result=0（接口调用失败，请检查参数/登录态）');
 
     const arr = (json && json.data && Array.isArray(json.data.list))
@@ -377,15 +336,16 @@ async function fetchFromErp() {
   return all.map(buildItemFromErp);
 }
 
-// 优先用真实 ERP；拉取失败/未配置时回退 mock，保证看板始终有数据
+// 只返回真实 ERP 数据；任何失败都返回 error（不回退任何模拟数据）
 async function getInventorySource() {
   try {
-    const real = await fetchFromErp();
-    if (real && real.length) return real;
+    const data = await fetchFromErp();
+    if (!data || !data.length) throw new Error('ERP 未返回任何库存数据');
+    return { data, error: null };
   } catch (e) {
-    console.error('[数据源] 真实 ERP 拉取失败，本次回退 mock：', e.message);
+    console.error('[数据源] 真实 ERP 拉取失败：', e.message);
+    return { data: null, error: e.message };
   }
-  return mockFetchSource();
 }
 
 /* ----------------------------- 通知模块 ----------------------------- */
@@ -453,7 +413,17 @@ async function notify(alert) {
 // 注意：状态变化去重 —— 只在「跌破 / 恢复」的瞬间记一条报警，避免每次检查都刷屏
 async function checkNow() {
   const store = readStore();
-  const raw = await getInventorySource(); // 配置了 ERP_API_URL 拉真实数据，否则回退 mock
+  const src = await getInventorySource();
+  // 真实拉取失败：保留上一次成功快照（不写入任何模拟数据），仅记录错误供前端提示
+  if (src.error || !src.data || !src.data.length) {
+    store.source = 'error';
+    store.lastError = src.error || 'ERP 未返回任何库存数据';
+    writeStore(store);
+    throw new Error(store.lastError);
+  }
+  store.source = 'erp';
+  store.lastError = '';
+  const raw = src.data; // 仅真实 ERP 数据
   const inventory = raw.map(it => {
     // 预警线 = 近30天销量 × 系数（默认系数 1 → 库存 < 近30天销量 即警告）
     // 优先单品覆盖系数，否则用全局系数；任何非法值回退默认 1，避免 warnLine 变成 NaN
@@ -467,36 +437,49 @@ async function checkNow() {
     return { ...it, factor, warnLine, below: it.stock < warnLine };
   });
 
-  const newAlerts = [];
+  // 监控「状态变化」：与上次检查快照对比，分类记录（去重防刷屏）
+  const newChanges = [];
+  const prevById = {};
+  (store.lastInventory || []).forEach(p => { prevById[p.id] = p; });
+
   inventory.forEach(it => {
     const wasBelow = !!store.belowState[it.id];
+    const prev = prevById[it.id];
+    // 1) 预警状态：跌破预警线 / 恢复
     if (it.below && !wasBelow)
-      newAlerts.push({
+      newChanges.push({
         itemId: it.id, title: it.title, sku: it.sku, warehouse: it.warehouse,
         stock: it.stock, warnLine: it.warnLine, type: 'alert', time: Date.now()
       });
     else if (!it.below && wasBelow)
-      newAlerts.push({
+      newChanges.push({
         itemId: it.id, title: it.title, sku: it.sku, warehouse: it.warehouse,
         stock: it.stock, warnLine: it.warnLine, type: 'recover', time: Date.now()
       });
+    // 2) 库存数量变化（首次检查无快照不记，避免启动即刷屏）
+    if (prev && Number(prev.stock) !== Number(it.stock))
+      newChanges.push({
+        itemId: it.id, title: it.title, sku: it.sku, warehouse: it.warehouse,
+        type: 'stock_change', from: Number(prev.stock), to: Number(it.stock), time: Date.now()
+      });
   });
 
-  store.alerts = [...newAlerts, ...store.alerts].slice(0, 200);
+  store.alerts = [...newChanges, ...store.alerts].slice(0, 500);
   store.belowState = {};
   inventory.forEach(it => { store.belowState[it.id] = it.below; });
   store.lastInventory = inventory;
   store.lastCheck = Date.now();
   writeStore(store);
 
-  // 通知：演示阶段 notifications 为空，仅打印日志；接好后在此真实发送
-  newAlerts.filter(a => a.type === 'alert').forEach(a => {
+  // 通知：仅「跌破预警线 / 恢复」触发（库存变动不发）；演示阶段 notifications 为空 → 仅打印日志
+  newChanges.filter(a => a.type === 'alert').forEach(a => {
     console.log(`[模拟通知] ${a.title} 库存 ${a.stock} 低于预警线 ${a.warnLine}（近30天销量 × 系数）`);
   });
-  // 异步发通知（不阻塞主流程），仅状态变化时触发
-  newAlerts.forEach(a => { notify(a).catch(e => console.error('[通知失败]', e.message)); });
+  newChanges.filter(a => a.type !== 'stock_change').forEach(a => {
+    notify(a).catch(e => console.error('[通知失败]', e.message));
+  });
 
-  return { inventory, newAlerts };
+  return { inventory, newAlerts: newChanges };
 }
 
 /* ----------------------------- Express API ----------------------------- */
@@ -512,7 +495,9 @@ app.get('/api/inventory', (req, res) => {
     inventory,
     lastCheck: store.lastCheck,
     globalFactor: store.globalFactor,
-    belowCount: inventory.filter(it => it.below).length
+    belowCount: inventory.filter(it => it.below).length,
+    source: store.source,
+    error: store.lastError
   });
 });
 
