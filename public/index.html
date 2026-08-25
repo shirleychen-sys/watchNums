@@ -272,7 +272,7 @@
                 <template v-else-if="c.type==='alert'">跌破预警线（库存 {{ c.stock }} &lt; 预警线 {{ c.warnLine }}）</template>
                 <template v-else>已恢复（库存 {{ c.stock }} ≥ 预警线 {{ c.warnLine }}）</template>
               </td>
-              <td>{{ c.warnLine }}</td>
+              <td>{{ c.warnLine ?? '—' }}</td>
             </tr>
           </tbody>
         </table>

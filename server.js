@@ -460,6 +460,8 @@ async function checkNow() {
     if (prev && Number(prev.stock) !== Number(it.stock))
       newChanges.push({
         itemId: it.id, title: it.title, sku: it.sku, warehouse: it.warehouse,
+        // 强制取 warnLine：优先用它自身已计算的值；fallback 到实时算（防丢失）
+        warnLine: (it.warnLine != null) ? it.warnLine : Math.max(0, Math.round(it.sales30 * (store.globalFactor || 1))),
         type: 'stock_change', from: Number(prev.stock), to: Number(it.stock), time: Date.now()
       });
   });
@@ -501,10 +503,24 @@ app.get('/api/inventory', (req, res) => {
   });
 });
 
-// 报警记录
+// 报警记录（自动补全旧记录可能缺失的 warnLine 字段）
 app.get('/api/alerts', (req, res) => {
   const store = readStore();
-  res.json({ alerts: store.alerts });
+  const alerts = store.alerts || [];
+  // 用当前库存快照反查补全 warnLine：修复前产生的 stock_change 记录可能缺少该字段
+  const invMap = {};
+  (store.lastInventory || []).forEach(it => { invMap[it.id] = it; });
+  const patched = alerts.map(a => {
+    if (a.warnLine == null && a.itemId && invMap[a.itemId]) {
+      return { ...a, warnLine: invMap[a.itemId].warnLine ?? 0 };
+    }
+    // 如果库存快照里也查不到（商品已下架等），写 0 而非 undefined/—
+    if (a.warnLine == null) {
+      return { ...a, warnLine: 0 };
+    }
+    return a;
+  });
+  res.json({ alerts: patched });
 });
 
 // 立即检查一次
