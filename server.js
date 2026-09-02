@@ -484,6 +484,159 @@ async function checkNow() {
   return { inventory, newAlerts: newChanges };
 }
 
+/* ============ 出入库统计（快麦报表中心 stockio 接口） ============
+   数据源：/kmrp/statistics/original/stockio/page （报表中心「出入库记录」）
+   鉴权要点（与库存列表接口 warehouseStockList 完全不同）：
+     - 公司ID 走请求头 companyid（统计模块公司=30847，库存 cId=4347622090 是另一个）
+     - 必须带 module-path: /report/dynamic/?reportId=68023（网关按此逻辑路径路由）
+     - 请求体为 JSON（Content-Type: application/json），含 api_name=kmrp_statistics_original_stockio_page
+     - 其余固定头：bx-v / trackid / origin / referer
+   行字段（已确认）：
+     dimension_date(YYYY-MM-DD) / sku_outer_id(规格商家编码) / sku_properties_name(规格名)
+     stock_change(数量,带符号:入库+ 出库-) / receipts_count(单据数) / inout_storage_type(_name)
+   说明：报表未回填 item_outer_id（款级编码恒空），故“款式”按 SKU(sku_outer_id) 聚合。
+   ==================================================================== */
+
+const STOCKIO_URL = process.env.ERP_STOCKIO_URL || 'https://viperp.superboss.cc/kmrp/statistics/original/stockio/page';
+const STOCKIO_COMPANY_ID = process.env.ERP_COMPANY_ID || '30847';
+const STOCKIO_MODULE_PATH = process.env.ERP_STOCKIO_MODULE_PATH || '/report/dynamic/?reportId=68023';
+const STOCKIO_BXV = process.env.ERP_STOCKIO_BXV || '2.5.11';
+const STOCKIO_REPORT_ID = process.env.ERP_STOCKIO_REPORT_ID || '68023';
+
+// 简单内存缓存（按 范围+仓库 缓存，避免每次都翻页拉全量）
+const inoutCache = new Map(); // key -> { ts, result }
+const INOUT_CACHE_TTL = 10 * 60 * 1000;
+
+// 翻页拉取某时间范围内的全部出入库行
+async function fetchStockIoRows(fromMs, toMs, warehouseId) {
+  const cookie = process.env.ERP_COOKIE;
+  if (!cookie) throw new Error('未配置 ERP_COOKIE，无法拉取出入库数据');
+  const headers = {
+    'Accept': 'application/json, text/plain, */*',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Content-Type': 'application/json',
+    'Cookie': cookie,
+    'companyid': STOCKIO_COMPANY_ID,
+    'bx-v': STOCKIO_BXV,
+    'module-path': STOCKIO_MODULE_PATH,
+    'trackid': 'trackid' + Date.now() + '_' + Math.floor(Math.random() * 100000),
+    'Origin': 'https://viperp.superboss.cc',
+    'Referer': 'https://viperp.superboss.cc/index.html'
+  };
+  const baseForm = {
+    api_name: 'kmrp_statistics_original_stockio_page',
+    endTime: String(toMs),
+    itemBrandIdList: '', itemCategoryIdList: '', itemCategoryQuerySetting: '',
+    itemClassifyIdList: '', mainSupplierFilter: '0', operationTimeQueryType: 'operation_time',
+    operationTypeList: '', operator: '', orderNumberList: '', pageId: '101203',
+    pageNo: 1, pageSize: 200, platformTradeIdList: '', quickTimeSelect: '',
+    skuBrandIdList: '', skuCategoryIdList: '', skuClassifyIdList: '', skuShipperIdList: '',
+    startTime: String(fromMs), stockInoutTypeList: '',
+    storageSectionTypeList: 'STOREHOUSE,PURCHASE,REFUND,DEFECTIVE',
+    supplierCodeList: '', supplierIdList: '', systemItemIdList: '', systemItemIdQueryType: '1',
+    systemOuterIdList: '', systemOuterIdQueryType: '0', systemSkuIdList: '', userIdList: '',
+    warehouseIdList: warehouseId || '', reportId: STOCKIO_REPORT_ID,
+    '$tradeNumType': 'platformTradeIdList'
+  };
+  // 单页请求（带限流退避重试）：快麦网关账户级限流会返回 result!==1 且 message 含「频繁/限流」
+  async function fetchOnePage(body, attempt = 0) {
+    const res = await fetch(STOCKIO_URL, { method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error(`出入库接口 HTTP ${res.status}`);
+    const json = await res.json();
+    if (json && json.result !== 1) {
+      const msg = (json && json.message) || '出入库接口返回异常';
+      if (/频繁|限流|429|too many|too_many/i.test(msg) && attempt < 4) {
+        const wait = 3000 * Math.pow(2, attempt); // 3s,6s,12s,24s
+        console.log(`[inout] 触发限流 "${msg}"，第${attempt + 1}次退避 ${wait}ms 后重试（总进度 pageNo=${body.pageNo}）`);
+        await new Promise(r => setTimeout(r, wait));
+        return fetchOnePage(body, attempt + 1);
+      }
+      throw new Error(msg);
+    }
+    return json;
+  }
+
+  const rows = [];
+  let pageNo = 1;
+  const cap = 500; // 安全阀：最多 500 页
+  while (pageNo <= cap) {
+    // 翻页间隔：避免触发「请求过于频繁」限流（首页除外）
+    if (pageNo > 1) await new Promise(r => setTimeout(r, 700));
+    const body = { ...baseForm, pageNo, pageSize: 200 };
+    const json = await fetchOnePage(body);
+    const list = (json.data && json.data.list) || [];
+    rows.push(...list);
+    const pageInfo = json.data && json.data.page;
+    const hasNext = pageInfo ? pageInfo.hasNext : (list.length >= 200);
+    if (!hasNext || list.length === 0) break;
+    pageNo++;
+  }
+  return rows;
+}
+
+// 按 月份 × 款式 聚合入库/出库
+//   groupBy='sku'（默认）：按 SKU 规格(sku_outer_id+规格名) 聚合，最细粒度
+//   groupBy='item'：按商品标题(item_title) 聚合，归到「款」级别
+function aggregateInOut(rows, groupBy = 'sku') {
+  const useItem = groupBy === 'item';
+  const months = {};       // month -> { inStyles:Set, outStyles:Set, inQty, outQty, inDocs, outDocs }
+  const styleByMonth = {}; // month -> styleKey -> { name, inQty, outQty, inDocs, outDocs }
+  for (const r of rows) {
+    const date = r.dimension_date;
+    if (!date) continue;
+    const month = String(date).slice(0, 7); // YYYY-MM
+    // 商品标题（报表里 item_title 实际==sku_outer_id，无独立款标题）；用「编码去掉末尾规格段」归到「款」
+    const titleOrSku = (r.item_title && String(r.item_title).trim()) ||
+      (r.sku_outer_id && String(r.sku_outer_id).trim()) || r.sys_sku_uk || '未知商品';
+    const styleKey = useItem
+      ? (titleOrSku.replace(/-[^-]+$/, '') || titleOrSku) // 去末尾规格段（-HS/-WTM 等），同款不同规格合并
+      : ((r.sku_outer_id && String(r.sku_outer_id).trim()) || r.sys_sku_uk || ('SKU' + (r.sys_sku_uk || '')));
+    const name = useItem
+      ? styleKey
+      : ((r.sku_properties_name && String(r.sku_properties_name).trim()) || r.sku_outer_id || styleKey);
+    const qty = Number(r.stock_change) || 0;   // 带符号：入库+ 出库-
+    const docs = Number(r.receipts_count) || 0; // 单据数
+    if (!months[month]) months[month] = { inStyles: new Set(), outStyles: new Set(), inQty: 0, outQty: 0, inDocs: 0, outDocs: 0 };
+    if (!styleByMonth[month]) styleByMonth[month] = {};
+    const m = months[month];
+    const sm = (styleByMonth[month][styleKey] = styleByMonth[month][styleKey] ||
+      { styleKey, name, inQty: 0, outQty: 0, inDocs: 0, outDocs: 0 });
+    if (qty > 0) {
+      m.inQty += qty; m.inDocs += docs; m.inStyles.add(styleKey);
+      sm.inQty += qty; sm.inDocs += docs;
+    } else if (qty < 0) {
+      m.outQty += -qty; m.outDocs += docs; m.outStyles.add(styleKey);
+      sm.outQty += -qty; sm.outDocs += docs;
+    }
+  }
+  // 月度汇总
+  const monthList = Object.keys(months).sort().map(month => {
+    const m = months[month];
+    return {
+      month,
+      inStyles: m.inStyles.size, inQty: m.inQty, inDocs: m.inDocs,
+      outStyles: m.outStyles.size, outQty: m.outQty, outDocs: m.outDocs,
+      netQty: m.inQty - m.outQty
+    };
+  });
+  // 款式明细：跨月汇总（每个款式在范围内总入库/出库）
+  const styleTotal = {};
+  for (const month of Object.keys(styleByMonth)) {
+    for (const sk of Object.keys(styleByMonth[month])) {
+      const s = styleByMonth[month][sk];
+      const t = (styleTotal[sk] = styleTotal[sk] ||
+        { styleKey: sk, name: s.name, inQty: 0, outQty: 0, inDocs: 0, outDocs: 0, monthsActive: new Set() });
+      t.inQty += s.inQty; t.outQty += s.outQty; t.inDocs += s.inDocs; t.outDocs += s.outDocs;
+      if (s.inQty > 0 || s.outQty > 0) t.monthsActive.add(month);
+    }
+  }
+  const styleList = Object.values(styleTotal)
+    .map(s => ({ styleKey: s.styleKey, name: s.name, inQty: s.inQty, outQty: s.outQty, inDocs: s.inDocs, outDocs: s.outDocs, monthsActive: s.monthsActive.size }))
+    .sort((a, b) => (b.inQty + b.outQty) - (a.inQty + a.outQty));
+  return { monthList, styleList };
+}
+
 /* ----------------------------- Express API ----------------------------- */
 const app = express();
 app.use(express.json());
@@ -521,6 +674,59 @@ app.get('/api/alerts', (req, res) => {
     return a;
   });
   res.json({ alerts: patched });
+});
+
+// 出入库统计（按月 × 款式 聚合）
+app.get('/api/inout-stats', async (req, res) => {
+  try {
+    let { from, to, warehouse, groupBy } = req.query;
+    groupBy = (groupBy === 'item') ? 'item' : 'sku'; // 仅允许 sku / item
+    // 默认：最近 6 个月
+    const now = new Date();
+    if (!from) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
+      from = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    }
+    if (!to) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+      to = `${d.getUTCFullYear()}-${String(d.getUTCMonth()).padStart(2, '0')}`;
+    }
+    // 支持多种写法：YYYY-MM-DD HH:mm:ss / YYYY-MM-DDTHH:mm:ss（秒）
+    //               YYYY-MM-DD HH:mm（缺秒补00）/ YYYY-MM-DD（仅日期=当日0点）/ YYYY-MM（整月）
+    const parseRange = (s, isTo) => {
+      let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+      if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+      m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{1,2})$/);
+      if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 0);
+      m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], 0, 0, 0, 0);
+      m = s.match(/^(\d{4})-(\d{1,2})$/);
+      if (m) {
+        if (isTo) return Date.UTC(+m[1], +m[2], 1, 0, 0, 0, 0) - 1; // 月末 23:59:59.999
+        return Date.UTC(+m[1], +m[2] - 1, 1, 0, 0, 0, 0);            // 当月1号 00:00:00
+      }
+      return null;
+    };
+    const fromMs = parseRange(from, false);
+    const toMs = parseRange(to, true);
+    if (fromMs == null || toMs == null) return res.status(400).json({ ok: false, error: 'from/to 格式应为 YYYY-MM-DD HH:mm:ss 或 YYYY-MM' });
+    const wh = warehouse || process.env.ERP_WAREHOUSE_IDS || '116959';
+    const cacheKey = `${fromMs}|${toMs}|${wh}|${groupBy}`;
+    const cached = inoutCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < INOUT_CACHE_TTL) {
+      return res.json({ ok: true, ...cached.result, cached: true });
+    }
+    const rows = await fetchStockIoRows(fromMs, toMs, wh);
+    const agg = aggregateInOut(rows, groupBy);
+    const result = {
+      from, to, warehouse: wh, rows: rows.length, groupBy,
+      monthList: agg.monthList, styleList: agg.styleList, source: 'erp'
+    };
+    inoutCache.set(cacheKey, { ts: Date.now(), result });
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // 立即检查一次

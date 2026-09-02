@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>淘宝库存监控小工具</title>
   <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="/vendor/element-plus.css" />
   <script src="/vendor/vue.global.prod.js"></script>
   <script src="/vendor/echarts.min.js"></script>
+  <script src="/vendor/element-plus.full.min.js"></script>
   <style>
     :root {
       --bg: #f4f6fb; --card: #ffffff; --line: #e6e9f0; --text: #1f2733;
@@ -50,6 +52,45 @@
     .panel h2 { font-size: 15px; margin: 0 0 14px; display: flex; align-items: center; gap: 10px; }
     .panel h2 .tip { color: var(--muted); font-weight: 400; font-size: 12px; }
     .toolbar { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    /* Element Plus 日期选择器：禁用项（超当前时间）显示灰色且不可交互 */
+    .el-date-table td.disabled .el-date-table-cell__text,
+    .el-picker-panel__time .time-select-item.disabled {
+      color: #c0c4cc !important;
+      cursor: not-allowed !important;
+      background: transparent !important;
+      pointer-events: none !important;
+    }
+    .el-date-table td.disabled {
+      pointer-events: none !important;
+    }
+    /* 修复 datetime 面板：顶部「日期/时间」两个输入框等宽均分、紧凑对齐 */
+    .el-date-picker__time-header {
+      display: flex !important;
+      align-items: center;
+      /* justify-content: space-between; */
+      gap: 10px;
+      padding: 8px 16px 4px;
+    }
+    .el-date-picker__editor-wrap { display: flex !important; flex: 1 1 0; min-width: 0; max-width: calc(50% - 5px); }
+    .el-date-picker__editor-wrap .el-input { width: 100%; }
+    .el-date-picker__editor-wrap .el-input__inner { text-align: center; font-size: 13px; }
+    /* datetime 面板整体宽度固定，日历单元格垂直居中 */
+    .el-picker-panel.el-date-picker { width: 360px !important; }
+    .el-date-table td { vertical-align: middle; }
+
+    /* 出入库筛选栏：横向排列，每项间距合适，label 与输入框垂直堆叠不重叠 */
+    .inout-filter-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .inout-filter-row .field { display: flex; flex-direction: column; }
+    .inout-filter-row .field label { margin-bottom: 8px; }
+    .inout-filter-row .el-date-editor { width: 170px; }
+    .inout-filter-row .wh-input { width: 120px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+    .inout-filter-row .inout-chk { align-self: flex-end; margin-bottom: 9px; }
+
     .btn {
       border: none; background: var(--primary); color: #fff; padding: 8px 18px;
       border-radius: 8px; cursor: pointer; font-size: 14px;
@@ -75,8 +116,11 @@
     .field { margin-bottom: 16px; }
     .field label { display: block; color: var(--muted); margin-bottom: 6px; font-size: 13px; }
     .field input {
-      width: 320px; max-width: 100%; padding: 9px 12px; border: 1px solid var(--line);
+      width: 160px; max-width: 100%; padding: 9px 12px; border: 1px solid var(--line);
       border-radius: 8px; font-size: 14px;
+    }
+    .el-input__inner {
+      border: none !important;
     }
     .field .hint { color: var(--muted); font-size: 12px; margin-top: 5px; }
     .inline { display: flex; gap: 26px; flex-wrap: wrap; }
@@ -86,7 +130,15 @@
       background: #1f2733; color: #fff; padding: 10px 20px; border-radius: 10px;
       font-size: 14px; z-index: 50; box-shadow: var(--shadow);
     }
+    .wrap { min-height: 60vh; }
+    .panel { min-height: 220px; }
+    @keyframes blink { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
     .search-input { width: 240px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+    .search-input:focus { outline: none; box-shadow: none; border-color: var(--line); }
+    .sort-select { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; background: #fff; cursor: pointer; font-weight: 400; }
+    .sort-select:focus { outline: none; box-shadow: none; border-color: var(--line); }
+    .inout-table { table-layout: fixed; width: 100%; }
+    .inout-table th, .inout-table td { white-space: nowrap; }
     .chk { display: inline-flex; align-items: center; gap: 5px; color: var(--text); font-size: 13px; cursor: pointer; user-select: none; }
     .chk input { width: 15px; height: 15px; cursor: pointer; }
     .pager { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
@@ -117,6 +169,7 @@
       <nav>
         <button :class="{ active: tab==='dashboard' }" @click="switchTab('dashboard')">库存看板</button>
         <button :class="{ active: tab==='changes' }" @click="switchTab('changes')">变化记录</button>
+        <button :class="{ active: tab==='inout' }" @click="switchTab('inout')">出入库统计</button>
         <button :class="{ active: tab==='settings' }" @click="switchTab('settings')">设置</button>
       </nav>
     </header>
@@ -246,6 +299,7 @@
           <button class="btn ghost" :class="{ on: changeFilter==='warn' }" @click="changeFilter='warn'">仅预警(跌破/恢复)</button>
           <button class="btn ghost" :class="{ on: changeFilter==='stock_change' }" @click="changeFilter='stock_change'">仅库存变动</button>
         </div>
+        <input class="search-input" v-model="changeSearch" placeholder="搜索" style="width:200px" />
         <button class="btn" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
       </div>
 
@@ -290,6 +344,126 @@
           <span class="info">跳至</span>
           <input class="jump-input" type="number" min="1" :max="changeTotalPages" v-model.number="changeJump" @keyup.enter="goChange" />
           <button @click="goChange">跳转</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 出入库统计 ============ -->
+    <div class="wrap" v-show="tab==='inout'">
+      <div class="panel">
+        <h2>📊 出入库统计（按月 × 款式）
+          <span class="tip">数据来源：快麦报表中心「出入库记录」；款式按 SKU（规格商家编码）聚合；件数 = 库存变动量（入库 + / 出库 −）</span>
+        </h2>
+        <div class="actionbar">
+          <div class="inout-filter-row">
+            <div class="field" style="margin:0">
+              <label>起始时间</label>
+              <el-date-picker v-model="inoutFrom" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" :clearable="false" placeholder="起始时间" style="width:210px !important" />
+            </div>
+            <div class="field" style="margin:0">
+              <label>结束时间</label>
+              <el-date-picker v-model="inoutTo" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" :clearable="false"
+                :disabled-date="disabledFutureDate" :disabled-hours="disabledHours" :disabled-minutes="disabledMinutes" :disabled-seconds="disabledSeconds"
+                placeholder="结束时间" style="width:210px !important" />
+            </div>
+            <div class="field" style="margin:0">
+              <label>仓库ID（空 = 全部）</label>
+              <input type="text" v-model="inoutWh" placeholder="116959" style="width:120px !important" />
+            </div>
+            <label class="chk inout-chk"><input type="checkbox" v-model="compareMode" /> 对比变化记录</label>
+            <button class="btn" :disabled="inoutLoading" @click="loadInout">{{ inoutLoading ? '统计中…' : '统计' }}</button>
+          </div>
+        </div>
+        <div class="banner error" v-if="inoutError">❌ {{ inoutError }}</div>
+        <div class="banner mock" v-if="inoutData && inoutData.rows != null">
+          📋 共拉取 {{ inoutData.rows }} 条出入库记录 · 范围 {{ inoutData.from }} ~ {{ inoutData.to }} · 仓库 {{ inoutData.warehouse || '全部' }} · 款式 {{ (inoutData.styleList || []).length }} 个
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center" v-if="inoutData">
+        <button class="btn ghost" :class="{ on: inoutTab==='style' }" @click="inoutTab='style'">👕 按款式明细</button>
+        <button class="btn ghost" :class="{ on: inoutTab==='month' }" @click="inoutTab='month'">📅 按月汇总</button>
+        <span style="flex:1"></span>
+        <button class="btn ghost" :class="{ on: inoutGroupBy==='sku' }" @click="setGroupBy('sku')">SKU 款式</button>
+        <button class="btn ghost" :class="{ on: inoutGroupBy==='item' }" @click="setGroupBy('item')">商品款</button>
+      </div>
+
+      <!-- 月度汇总 -->
+      <div class="panel" v-show="inoutTab==='month' && inoutData">
+        <h2>📅 每月入库 / 出库概览
+          <span class="tip">来了多少款、多少件；出了多少款、多少件</span>
+          <button class="btn ghost sm" style="float:right" @click="exportCsv('month')">⬇ 导出 CSV</button>
+        </h2>
+        <div style="overflow-x:auto">
+        <table class="inout-table">
+          <thead><tr>
+            <th style="width:15%">月份</th><th style="width:17%">入库款式数</th><th style="width:17%">入库件数</th><th style="width:17%">出库款式数</th><th style="width:17%">出库件数</th><th style="width:17%">净变动</th>
+          </tr></thead>
+          <tbody>
+            <tr v-if="!(inoutData && inoutData.monthList && inoutData.monthList.length)"><td colspan="6" class="muted" style="text-align:center;padding:18px">该范围暂无出入库数据</td></tr>
+            <tr v-for="m in (inoutData && inoutData.monthList) || []" :key="m.month">
+              <td>{{ m.month }}</td>
+              <td>{{ m.inStyles }}</td>
+              <td>{{ m.inQty }}</td>
+              <td>{{ m.outStyles }}</td>
+              <td>{{ m.outQty }}</td>
+              <td :style="{ color: m.netQty>=0 ? 'var(--ok)' : 'var(--danger)', fontWeight:700 }">{{ m.netQty>=0 ? '+' : '' }}{{ m.netQty }}</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- 款式明细 -->
+      <div class="panel" v-show="inoutTab==='style' && inoutData">
+        <h2>👕 {{ inoutGroupBy==='item' ? '商品款' : '款式' }}出入库明细
+          <span class="tip">各{{ inoutGroupBy==='item' ? '商品' : '款式' }}在范围内的总入库 / 出库件数</span>
+          <button class="btn ghost sm" style="float:right" @click="exportCsv('style')">⬇ 导出 CSV</button>
+        </h2>
+        <div class="actionbar">
+          <input class="search-input" v-model="styleSearch" placeholder="搜索" />
+          <select v-model="styleSort" class="sort-select">
+            <option value="nameAsc">升序</option>
+            <option value="nameDesc">降序</option>
+            <option value="netDesc">数量</option>
+          </select>
+          <span class="info">共 {{ filteredStyles.length }} 款</span>
+        </div>
+        <div style="overflow-x:auto">
+        <table class="inout-table">
+          <thead><tr>
+            <th style="width:22%">{{ inoutGroupBy==='item' ? '商品标题' : '款式编码' }}</th>
+            <th v-if="inoutGroupBy!=='item'" style="width:18%">规格</th>
+            <th style="width:9%">入库件数</th><th style="width:9%">出库件数</th><th style="width:9%">净变动</th><th style="width:9%">活跃月数</th>
+            <th style="width:12%">变化记录净变</th><th style="width:12%">差异</th>
+          </tr></thead>
+          <tbody>
+            <tr v-if="!pagedStyles.length"><td :colspan="inoutGroupBy==='item' ? 7 : 8" class="muted" style="text-align:center;padding:18px">无匹配款式</td></tr>
+            <tr v-for="s in pagedStyles" :key="s.styleKey">
+              <td class="muted">{{ s.styleKey }}</td>
+              <td v-if="inoutGroupBy!=='item'">{{ s.name }}</td>
+              <td>{{ s.inQty }}</td>
+              <td>{{ s.outQty }}</td>
+              <td :style="{ color: (s.inQty - s.outQty)>=0 ? 'var(--ok)' : 'var(--danger)', fontWeight:700 }">{{ (s.inQty - s.outQty)>=0 ? '+' : '' }}{{ s.inQty - s.outQty }}</td>
+              <td>{{ s.monthsActive }}</td>
+              <td :style="{ color: diffOf(s)===0 ? 'var(--muted)' : (diffOf(s)>0 ? 'var(--ok)' : 'var(--danger)'), fontWeight:700 }">{{ compareMode ? ((changeNetOf(s)>=0?'+':'') + changeNetOf(s)) : '—' }}</td>
+              <td :style="{ color: diffOf(s)===0 ? 'var(--muted)' : (diffOf(s)>0 ? 'var(--ok)' : 'var(--danger)'), fontWeight:700 }">{{ compareMode ? ((diffOf(s)>=0?'+':'') + diffOf(s)) : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="pager">
+          <button :disabled="stylePage<=1" @click="stylePage--">上一页</button>
+          <span class="info">第 {{ stylePage }} / {{ styleTotalPages }} 页 · 共 {{ filteredStyles.length }} 条</span>
+          <button :disabled="stylePage>=styleTotalPages" @click="stylePage++">下一页</button>
+          <span class="info">每页</span>
+          <select v-model.number="styleSize">
+            <option :value="20">20</option><option :value="50">50</option><option :value="100">100</option>
+          </select>
+          <span class="info">条</span>
+          <span class="info">跳至</span>
+          <input class="jump-input" type="number" min="1" :max="styleTotalPages" v-model.number="styleJump" @keyup.enter="goStyle" />
+          <button @click="goStyle">跳转</button>
         </div>
       </div>
     </div>
@@ -434,11 +608,14 @@
         }
         const changes = ref([]);
         const changeFilter = ref('all');
+        const changeSearch = ref('');
         const filteredChanges = computed(() => {
-          const list = changes.value || [];
-          if (changeFilter.value === 'all') return list;
-          if (changeFilter.value === 'warn') return list.filter(c => c.type === 'alert' || c.type === 'recover');
-          return list.filter(c => c.type === changeFilter.value);
+          let list = changes.value || [];
+          if (changeFilter.value === 'warn') list = list.filter(c => c.type === 'alert' || c.type === 'recover');
+          else if (changeFilter.value !== 'all') list = list.filter(c => c.type === changeFilter.value);
+          const q = changeSearch.value.trim().toLowerCase();
+          if (q) list = list.filter(c => (c.sku || '').toLowerCase().includes(q) || (c.title || '').toLowerCase().includes(q));
+          return list;
         });
         // 变化记录分页（格式与库存看板表格一致：上一页 / 第 X/Y 页 / 下一页 / 每页 select / 跳至 / 跳转）
         const changeSize = ref(20);
@@ -449,7 +626,7 @@
         const changeJump = ref(1);
         function goChange() { jumpTo(changeJump, changeTotalPages, changePage); }
         watch([changeTotalPages, changePage], () => { if (changePage.value > changeTotalPages.value) changePage.value = changeTotalPages.value; });
-        watch([changeFilter, detailTab], () => { changePage.value = 1; changeJump.value = 1; });
+        watch([changeFilter, changeSearch, detailTab], () => { changePage.value = 1; changeJump.value = 1; });
         function typeLabel(t) {
           if (t === 'alert') return '跌破预警';
           if (t === 'recover') return '恢复';
@@ -507,9 +684,169 @@
           tab.value = t;
           if (t === 'settings') loadSettings();
           if (t === 'changes') loadChanges();
+          if (t === 'inout' && !inoutData.value && !inoutLoading.value) loadInout();
         }
 
+        /* ----------------- 出入库统计（按月 × 款式） ---------------- */
+        const inoutTab = ref('style');
+        const inoutFrom = ref('');
+        const inoutTo = ref('');
+        const inoutWh = ref('116959');
+        const inoutLoading = ref(false);
+        const inoutError = ref('');
+        const inoutData = ref(null);
+        const compareMode = ref(false);
+        const changeAgg = ref(null);
+        const inoutGroupBy = ref('sku'); // 'sku' = SKU 款式；'item' = 商品款（按标题聚合）
+        const styleSearch = ref('');
+        const styleSort = ref('nameAsc');
+        const styleSize = ref(20);
+        const stylePage = ref(1);
+        const styleJump = ref(1);
+
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+        const rangeArr = (a, b) => { const r = []; for (let i = a; i <= b; i++) r.push(i); return r; };
+        // 结束时间不可超过当前时刻（每次调用时取最新 now，保证边界随时间推移自动收紧）
+        const getNow = () => new Date();
+        const disabledFutureDate = (time) => time.getTime() > Date.now();
+        const disabledHours = (sel) => { const n = getNow(); if (!sameDay(sel, n)) return []; return rangeArr(n.getHours() + 1, 23); };
+        const disabledMinutes = (sel, h) => {
+          const n = getNow();
+          if (!sameDay(sel, n) || h == null) return [];
+          if (h < n.getHours()) return [];
+          if (h > n.getHours()) return rangeArr(0, 59);
+          return rangeArr(n.getMinutes() + 1, 59);
+        };
+        const disabledSeconds = (sel, h, mi) => {
+          const n = getNow();
+          if (!sameDay(sel, n) || h == null) return [];
+          if (h < n.getHours()) return [];
+          if (h > n.getHours()) return rangeArr(0, 59);
+          if (mi == null) return [];
+          if (mi < n.getMinutes()) return [];
+          if (mi > n.getMinutes()) return rangeArr(0, 59);
+          return rangeArr(n.getSeconds() + 1, 59);
+        };
+        function defaultInoutRange() {
+          const n = getNow();
+          const y = n.getFullYear();
+          const m = pad2(n.getMonth() + 1);
+          const d = pad2(n.getDate());
+          // 默认范围：本月1号 00:00:00 ~ 当前时分秒（结束时间不超过现在）
+          inoutFrom.value = `${y}-${m}-01 00:00:00`;
+          inoutTo.value = `${y}-${m}-${d} ${pad2(n.getHours())}:${pad2(n.getMinutes())}:${pad2(n.getSeconds())}`;
+        }
+        const filteredStyles = computed(() => {
+          const src = (inoutData.value && inoutData.value.styleList) || [];
+          const q = styleSearch.value.trim().toLowerCase();
+          let list = q ? src.filter(s =>
+            (s.styleKey || '').toLowerCase().includes(q) || (s.name || '').toLowerCase().includes(q)) : src.slice();
+          const sort = styleSort.value;
+          if (sort === 'nameAsc') list = list.slice().sort((a, b) => String(a.styleKey || '').localeCompare(String(b.styleKey || '')));
+          else if (sort === 'nameDesc') list = list.slice().sort((a, b) => String(b.styleKey || '').localeCompare(String(a.styleKey || '')));
+          else if (sort === 'netDesc') list = list.slice().sort((a, b) => ((b.inQty - b.outQty) - (a.inQty - a.outQty)));
+          return list;
+        });
+        const styleTotalPages = computed(() => Math.max(1, Math.ceil(filteredStyles.value.length / styleSize.value)));
+        const pagedStyles = computed(() =>
+          filteredStyles.value.slice((stylePage.value - 1) * styleSize.value, stylePage.value * styleSize.value));
+        function goStyle() { jumpTo(styleJump, styleTotalPages, stylePage); }
+        watch([styleTotalPages, stylePage], () => { if (stylePage.value > styleTotalPages.value) stylePage.value = styleTotalPages.value; });
+        watch([styleSearch, styleSort, inoutTab], () => { stylePage.value = 1; styleJump.value = 1; });
+
+        function setGroupBy(g) {
+          if (inoutGroupBy.value === g) return;
+          inoutGroupBy.value = g;
+          loadInout();
+        }
+
+        // 导出 CSV（客户端生成，基于当前已拉取数据，不触发新请求）
+        function exportCsv(kind) {
+          const d = inoutData.value;
+          if (!d) return;
+          let header, rows;
+          if (kind === 'month') {
+            header = ['月份', '入库款式数', '入库件数', '出库款式数', '出库件数', '净变动'];
+            rows = (d.monthList || []).map(m => [m.month, m.inStyles, m.inQty, m.outStyles, m.outQty, m.netQty]);
+          } else {
+            const isItem = d.groupBy === 'item';
+            header = isItem ? ['商品标题', '入库件数', '出库件数', '净变动', '活跃月数']
+              : ['款式编码', '规格', '入库件数', '出库件数', '净变动', '活跃月数'];
+            rows = (d.styleList || []).map(s => isItem
+              ? [s.styleKey, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]
+              : [s.styleKey, s.name, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
+          }
+          const esc = v => {
+            const s = (v == null ? '' : String(v));
+            return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+          };
+          const csv = '﻿' + [header, ...rows].map(r => r.map(esc).join(',')).join('\r\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const a = document.createElement('a');
+          const range = `${d.from || ''}_${d.to || ''}`;
+          a.href = URL.createObjectURL(blob);
+          a.download = `出入库统计_${kind === 'month' ? '按月' : (d.groupBy === 'item' ? '商品款' : '款式')}_${range}.csv`;
+          document.body.appendChild(a); a.click(); a.remove();
+          URL.revokeObjectURL(a.href);
+        }
+
+        async function loadInout() {
+          inoutLoading.value = true; inoutError.value = '';
+          try {
+            if (!inoutFrom.value || !inoutTo.value) defaultInoutRange(); // 清空后回退本月默认，避免后端兜底成最近6个月
+            const params = new URLSearchParams();
+            const fromStr = inoutFrom.value ? String(inoutFrom.value).replace('T', ' ') : '';
+            let toStr = inoutTo.value ? String(inoutTo.value).replace('T', ' ') : '';
+            if (toStr) {
+              const tt = new Date(toStr.replace(/-/g, '/'));
+              if (!isNaN(tt.getTime()) && tt.getTime() > Date.now()) {
+                const n = new Date();
+                toStr = `${n.getFullYear()}-${pad2(n.getMonth() + 1)}-${pad2(n.getDate())} ${pad2(n.getHours())}:${pad2(n.getMinutes())}:${pad2(n.getSeconds())}`;
+                inoutTo.value = toStr;
+              }
+            }
+            if (fromStr) params.set('from', fromStr);
+            if (toStr) params.set('to', toStr);
+            if (inoutWh.value && inoutWh.value.trim()) params.set('warehouse', inoutWh.value.trim());
+            params.set('groupBy', inoutGroupBy.value);
+            const data = await api('/api/inout-stats?' + params.toString());
+            if (!data.ok) { inoutError.value = data.error || '统计失败'; inoutData.value = null; }
+            else { inoutData.value = data; stylePage.value = 1; styleJump.value = 1; if (compareMode.value) loadCompare(); }
+          } catch (e) {
+            inoutError.value = e.message || '请求失败';
+          } finally {
+            inoutLoading.value = false;
+          }
+        }
+
+        // 按单据口径对比：拉变化记录，按 SKU 聚合窗口内净变动(实际库存口径)，与出入库单据净变并排
+        async function loadCompare() {
+          if (!compareMode.value) { changeAgg.value = null; return; }
+          try {
+            const data = await api('/api/alerts');
+            const alerts = data.alerts || [];
+            const fromMs = inoutFrom.value ? new Date(String(inoutFrom.value).replace('T', ' ')).getTime() : 0;
+            const toMs = inoutTo.value ? new Date(String(inoutTo.value).replace('T', ' ')).getTime() : Date.now();
+            const map = {};
+            for (const a of alerts) {
+              if (a.type !== 'stock_change') continue;
+              const t = a.time || 0;
+              if (t < fromMs || t > toMs) continue;
+              const sku = (a.sku || '').trim();
+              if (!sku) continue;
+              const net = (Number(a.to) || 0) - (Number(a.from) || 0);
+              map[sku] = (map[sku] || 0) + net;
+            }
+            changeAgg.value = map;
+          } catch (e) { changeAgg.value = {}; }
+        }
+        function changeNetOf(s) { const m = changeAgg.value; return (m && m[s.styleKey]) || 0; }
+        function diffOf(s) { return (s.inQty - s.outQty) - changeNetOf(s); }
+        watch(compareMode, (v) => { if (v && inoutData.value) loadCompare(); else changeAgg.value = null; });
+
         onMounted(() => {
+          defaultInoutRange();
           loadInventory();
           loadChanges();
           pollTimer = setInterval(() => { loadInventory(); loadChanges(); }, 30000);
@@ -520,13 +857,16 @@
           zeroItems, lowItems, onlyActive, activeCount, detailTab,
           zeroSize, zeroPage, zeroTotalPages, pagedZero, zeroJump, goZero,
           lowSize, lowPage, lowTotalPages, pagedLow, lowJump, goLow,
-          changes, changeFilter, filteredChanges, pagedChanges, typeLabel, rowCls,
+          changes, changeFilter, changeSearch, filteredChanges, pagedChanges, typeLabel, rowCls,
           changeSize, changePage, changeTotalPages, changeJump, goChange,
           settings,
+          inoutTab, inoutFrom, inoutTo, inoutWh, inoutLoading, inoutError, inoutData, inoutGroupBy, compareMode, changeNetOf, diffOf,
+          styleSearch, styleSort, styleSize, stylePage, styleJump, filteredStyles, pagedStyles, styleTotalPages, goStyle,
+          loadInout, setGroupBy, exportCsv,
           fmtTime, checkNow, saveSettings, switchTab
         };
       }
-    }).mount('#app');
+    }).use(ElementPlus).mount('#app');
   </script>
 </body>
 </html>
