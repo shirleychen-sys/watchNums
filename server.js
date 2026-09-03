@@ -524,6 +524,10 @@ async function fetchStockIoRows(fromMs, toMs, warehouseId) {
     'Origin': 'https://viperp.superboss.cc',
     'Referer': 'https://viperp.superboss.cc/index.html'
   };
+  // 与库存接口一致：报表中心(kmrp 统计模块)同样需要 ERP_TOKEN / ERP_API_KEY 鉴权，
+  // 仅带 cookie 会被网关判为「会话异常」，必须补上 Bearer / X-API-Key 头。
+  if (process.env.ERP_TOKEN) headers['Authorization'] = `Bearer ${process.env.ERP_TOKEN}`;
+  if (process.env.ERP_API_KEY) headers['X-API-Key'] = process.env.ERP_API_KEY;
   const baseForm = {
     api_name: 'kmrp_statistics_original_stockio_page',
     endTime: String(toMs),

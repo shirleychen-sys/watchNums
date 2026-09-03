@@ -370,7 +370,6 @@
               <label>仓库ID（空 = 全部）</label>
               <input type="text" v-model="inoutWh" placeholder="116959" style="width:120px !important" />
             </div>
-            <label class="chk inout-chk"><input type="checkbox" v-model="compareMode" /> 对比变化记录</label>
             <button class="btn" :disabled="inoutLoading" @click="loadInout">{{ inoutLoading ? '统计中…' : '统计' }}</button>
           </div>
         </div>
@@ -432,13 +431,12 @@
         <div style="overflow-x:auto">
         <table class="inout-table">
           <thead><tr>
-            <th style="width:22%">{{ inoutGroupBy==='item' ? '商品标题' : '款式编码' }}</th>
-            <th v-if="inoutGroupBy!=='item'" style="width:18%">规格</th>
-            <th style="width:9%">入库件数</th><th style="width:9%">出库件数</th><th style="width:9%">净变动</th><th style="width:9%">活跃月数</th>
-            <th style="width:12%">变化记录净变</th><th style="width:12%">差异</th>
+            <th style="width:20%">{{ inoutGroupBy==='item' ? '商品标题' : '款式编码' }}</th>
+            <th v-if="inoutGroupBy!=='item'" style="width:26%">规格</th>
+            <th style="width:13%">入库件数</th><th style="width:13%">出库件数</th><th style="width:14%">净变动</th><th style="width:14%">活跃月数</th>
           </tr></thead>
           <tbody>
-            <tr v-if="!pagedStyles.length"><td :colspan="inoutGroupBy==='item' ? 7 : 8" class="muted" style="text-align:center;padding:18px">无匹配款式</td></tr>
+            <tr v-if="!pagedStyles.length"><td :colspan="inoutGroupBy==='item' ? 5 : 6" class="muted" style="text-align:center;padding:18px">无匹配款式</td></tr>
             <tr v-for="s in pagedStyles" :key="s.styleKey">
               <td class="muted">{{ s.styleKey }}</td>
               <td v-if="inoutGroupBy!=='item'">{{ s.name }}</td>
@@ -446,8 +444,6 @@
               <td>{{ s.outQty }}</td>
               <td :style="{ color: (s.inQty - s.outQty)>=0 ? 'var(--ok)' : 'var(--danger)', fontWeight:700 }">{{ (s.inQty - s.outQty)>=0 ? '+' : '' }}{{ s.inQty - s.outQty }}</td>
               <td>{{ s.monthsActive }}</td>
-              <td :style="{ color: diffOf(s)===0 ? 'var(--muted)' : (diffOf(s)>0 ? 'var(--ok)' : 'var(--danger)'), fontWeight:700 }">{{ compareMode ? ((changeNetOf(s)>=0?'+':'') + changeNetOf(s)) : '—' }}</td>
-              <td :style="{ color: diffOf(s)===0 ? 'var(--muted)' : (diffOf(s)>0 ? 'var(--ok)' : 'var(--danger)'), fontWeight:700 }">{{ compareMode ? ((diffOf(s)>=0?'+':'') + diffOf(s)) : '—' }}</td>
             </tr>
           </tbody>
         </table>
@@ -695,8 +691,6 @@
         const inoutLoading = ref(false);
         const inoutError = ref('');
         const inoutData = ref(null);
-        const compareMode = ref(false);
-        const changeAgg = ref(null);
         const inoutGroupBy = ref('sku'); // 'sku' = SKU 款式；'item' = 商品款（按标题聚合）
         const styleSearch = ref('');
         const styleSort = ref('nameAsc');
@@ -732,10 +726,16 @@
           const n = getNow();
           const y = n.getFullYear();
           const m = pad2(n.getMonth() + 1);
-          const d = pad2(n.getDate());
-          // 默认范围：本月1号 00:00:00 ~ 当前时分秒（结束时间不超过现在）
+          const d = n.getDate();
+          // 起始：本月1号 00:00:00
           inoutFrom.value = `${y}-${m}-01 00:00:00`;
-          inoutTo.value = `${y}-${m}-${d} ${pad2(n.getHours())}:${pad2(n.getMinutes())}:${pad2(n.getSeconds())}`;
+          // 结束：每月1号 = 当月1号 23:59:59；其余日期 = 前一天 23:59:59
+          let ey = y, em = n.getMonth() + 1, ed = d;
+          if (d !== 1) {
+            const prev = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
+            ey = prev.getFullYear(); em = prev.getMonth() + 1; ed = prev.getDate();
+          }
+          inoutTo.value = `${ey}-${pad2(em)}-${pad2(ed)} 23:59:59`;
         }
         const filteredStyles = computed(() => {
           const src = (inoutData.value && inoutData.value.styleList) || [];
@@ -761,32 +761,46 @@
           loadInout();
         }
 
-        // 导出 CSV（客户端生成，基于当前已拉取数据，不触发新请求）
+        // 导出表格（客户端生成，基于当前已拉取数据，不触发新请求）
+        // 说明：CSV 不支持列宽，Excel 打开会按默认窄宽截断长文本；
+        // 故导出为带 <col width> 列宽的 Excel(.xls)，每格完整显示。
         function exportCsv(kind) {
           const d = inoutData.value;
           if (!d) return;
-          let header, rows;
+          let header, rows, widths;
           if (kind === 'month') {
             header = ['月份', '入库款式数', '入库件数', '出库款式数', '出库件数', '净变动'];
             rows = (d.monthList || []).map(m => [m.month, m.inStyles, m.inQty, m.outStyles, m.outQty, m.netQty]);
+            widths = [120, 100, 100, 100, 100, 100];
           } else {
             const isItem = d.groupBy === 'item';
-            header = isItem ? ['商品标题', '入库件数', '出库件数', '净变动', '活跃月数']
-              : ['款式编码', '规格', '入库件数', '出库件数', '净变动', '活跃月数'];
-            rows = (d.styleList || []).map(s => isItem
-              ? [s.styleKey, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]
-              : [s.styleKey, s.name, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
+            if (isItem) {
+              header = ['商品标题', '入库件数', '出库件数', '净变动', '活跃月数'];
+              rows = (d.styleList || []).map(s => [s.styleKey, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
+              rows.sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'zh-Hans-CN')); // 商品标题首字母升序
+              widths = [300, 100, 100, 100, 100];
+            } else {
+              header = ['款式编码', '规格', '入库件数', '出库件数', '净变动', '活跃月数'];
+              rows = (d.styleList || []).map(s => [s.styleKey, s.name, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
+              rows.sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'zh-Hans-CN')); // 规格首字母升序
+              widths = [160, 340, 100, 100, 100, 100];
+            }
           }
           const esc = v => {
             const s = (v == null ? '' : String(v));
-            return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+            return /[&<>"']/.test(s)
+              ? s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+              : s;
           };
-          const csv = '﻿' + [header, ...rows].map(r => r.map(esc).join(',')).join('\r\n');
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const colgroup = '<colgroup>' + widths.map(w => `<col width="${w}" />`).join('') + '</colgroup>';
+          const thead = '<thead><tr>' + header.map(h => `<th>${esc(h)}</th>`).join('') + '</tr></thead>';
+          const tbody = '<tbody>' + rows.map(r => '<tr>' + r.map(c => `<td>${esc(c)}</td>`).join('') + '</tr>').join('') + '</tbody>';
+          const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body><table border="1">' + colgroup + thead + tbody + '</table></body></html>';
+          const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
           const a = document.createElement('a');
           const range = `${d.from || ''}_${d.to || ''}`;
           a.href = URL.createObjectURL(blob);
-          a.download = `出入库统计_${kind === 'month' ? '按月' : (d.groupBy === 'item' ? '商品款' : '款式')}_${range}.csv`;
+          a.download = `出入库统计_${kind === 'month' ? '按月' : (d.groupBy === 'item' ? '商品款' : '款式')}_${range}.xls`;
           document.body.appendChild(a); a.click(); a.remove();
           URL.revokeObjectURL(a.href);
         }
@@ -812,38 +826,13 @@
             params.set('groupBy', inoutGroupBy.value);
             const data = await api('/api/inout-stats?' + params.toString());
             if (!data.ok) { inoutError.value = data.error || '统计失败'; inoutData.value = null; }
-            else { inoutData.value = data; stylePage.value = 1; styleJump.value = 1; if (compareMode.value) loadCompare(); }
+            else { inoutData.value = data; stylePage.value = 1; styleJump.value = 1; }
           } catch (e) {
             inoutError.value = e.message || '请求失败';
           } finally {
             inoutLoading.value = false;
           }
         }
-
-        // 按单据口径对比：拉变化记录，按 SKU 聚合窗口内净变动(实际库存口径)，与出入库单据净变并排
-        async function loadCompare() {
-          if (!compareMode.value) { changeAgg.value = null; return; }
-          try {
-            const data = await api('/api/alerts');
-            const alerts = data.alerts || [];
-            const fromMs = inoutFrom.value ? new Date(String(inoutFrom.value).replace('T', ' ')).getTime() : 0;
-            const toMs = inoutTo.value ? new Date(String(inoutTo.value).replace('T', ' ')).getTime() : Date.now();
-            const map = {};
-            for (const a of alerts) {
-              if (a.type !== 'stock_change') continue;
-              const t = a.time || 0;
-              if (t < fromMs || t > toMs) continue;
-              const sku = (a.sku || '').trim();
-              if (!sku) continue;
-              const net = (Number(a.to) || 0) - (Number(a.from) || 0);
-              map[sku] = (map[sku] || 0) + net;
-            }
-            changeAgg.value = map;
-          } catch (e) { changeAgg.value = {}; }
-        }
-        function changeNetOf(s) { const m = changeAgg.value; return (m && m[s.styleKey]) || 0; }
-        function diffOf(s) { return (s.inQty - s.outQty) - changeNetOf(s); }
-        watch(compareMode, (v) => { if (v && inoutData.value) loadCompare(); else changeAgg.value = null; });
 
         onMounted(() => {
           defaultInoutRange();
@@ -860,7 +849,7 @@
           changes, changeFilter, changeSearch, filteredChanges, pagedChanges, typeLabel, rowCls,
           changeSize, changePage, changeTotalPages, changeJump, goChange,
           settings,
-          inoutTab, inoutFrom, inoutTo, inoutWh, inoutLoading, inoutError, inoutData, inoutGroupBy, compareMode, changeNetOf, diffOf,
+          inoutTab, inoutFrom, inoutTo, inoutWh, inoutLoading, inoutError, inoutData, inoutGroupBy,
           styleSearch, styleSort, styleSize, stylePage, styleJump, filteredStyles, pagedStyles, styleTotalPages, goStyle,
           loadInout, setGroupBy, exportCsv,
           fmtTime, checkNow, saveSettings, switchTab

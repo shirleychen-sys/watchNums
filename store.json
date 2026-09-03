@@ -8,6 +8,259 @@
   "itemFactors": {},
   "alerts": [
     {
+      "itemId": "525366187762176_669744769331712",
+      "title": "扁五折6骨配色柄-墨绿",
+      "sku": "BWZPS-6K-ML",
+      "warehouse": "义乌大货仓",
+      "warnLine": 2100,
+      "type": "stock_change",
+      "from": 11100,
+      "to": 10600,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "525366187762176_525366485123584",
+      "title": "扁五折6骨金柄-墨绿",
+      "sku": "BWZ-6K-ML",
+      "warehouse": "义乌大货仓",
+      "warnLine": 10200,
+      "type": "stock_change",
+      "from": 15200,
+      "to": 13700,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "525366187762176_525366485142016",
+      "title": "扁五折6骨金柄-抹茶绿",
+      "sku": "BWZ-6K-MCL",
+      "warehouse": "义乌大货仓",
+      "warnLine": 700,
+      "type": "stock_change",
+      "from": 8700,
+      "to": 7700,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "525366187762176_741991882252800",
+      "title": "扁五折6骨金柄-浅紫",
+      "sku": "BWZ-6K-QZ",
+      "warehouse": "义乌大货仓",
+      "warnLine": 13300,
+      "type": "stock_change",
+      "from": 6900,
+      "to": 5900,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "525366187762176_565027256539648",
+      "title": "扁五折6骨金柄-浅蓝",
+      "sku": "BWZ-6K-QL",
+      "warehouse": "义乌大货仓",
+      "warnLine": 15700,
+      "type": "stock_change",
+      "from": 11400,
+      "to": 9900,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "525366187762176_525366485146112",
+      "title": "扁五折6骨金柄-藏青",
+      "sku": "BWZ-6K-ZQ",
+      "warehouse": "义乌大货仓",
+      "warnLine": 8300,
+      "type": "stock_change",
+      "from": 71100,
+      "to": 70100,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "525366187762176_525366485121536",
+      "title": "扁五折6骨金柄-酒红",
+      "sku": "BWZ-6K-JH",
+      "warehouse": "义乌大货仓",
+      "warnLine": 1700,
+      "type": "stock_change",
+      "from": 5400,
+      "to": 4900,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "502401421928960_523950731354624",
+      "title": "自动12骨小米双骨黑胶-黑色",
+      "sku": "SW-12ZDSG-HS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 157650,
+      "type": "stock_change",
+      "from": 69086,
+      "to": 67286,
+      "time": 1788396106074
+    },
+    {
+      "itemId": "610827367635456_610827467547136",
+      "title": "685弯钩-宝蓝",
+      "sku": "685WG-BL",
+      "warehouse": "义乌大货仓",
+      "warnLine": 2040,
+      "type": "stock_change",
+      "from": 0,
+      "to": 600,
+      "time": 1788394048132
+    },
+    {
+      "itemId": "610827367635456_610827467534848",
+      "title": "685弯钩-红色",
+      "sku": "685WG-HS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 3000,
+      "type": "stock_change",
+      "from": 200,
+      "to": 640,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "610827367635456_610827467512320",
+      "title": "685弯钩-黄色",
+      "sku": "685WG-HSS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 6840,
+      "type": "stock_change",
+      "from": 11920,
+      "to": 15600,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502399509709312_591022373415424",
+      "title": "手动3节布朗熊-粉色",
+      "sku": "BLX-SD-3J-FS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 400,
+      "type": "stock_change",
+      "from": 200,
+      "to": 100,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502399509709312_591022373411328",
+      "title": "手动3节布朗熊-蓝色",
+      "sku": "BLX-SD-3J-LS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 400,
+      "type": "stock_change",
+      "from": 100,
+      "to": 0,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502401421928960_523950731325952",
+      "title": "自动12骨小米双骨黑胶-梧桐米",
+      "sku": "SW-12ZDSG-WTM",
+      "warehouse": "义乌大货仓",
+      "warnLine": 39720,
+      "type": "stock_change",
+      "from": 12792,
+      "to": 12492,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502401421928960_523950731346432",
+      "title": "自动12骨小米双骨黑胶-藏青",
+      "sku": "SW-12ZDSG-ZQ",
+      "warehouse": "义乌大货仓",
+      "warnLine": 56220,
+      "type": "stock_change",
+      "from": 240,
+      "to": 120,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502401421928960_523950731354624",
+      "title": "自动12骨小米双骨黑胶-黑色",
+      "sku": "SW-12ZDSG-HS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 157650,
+      "type": "stock_change",
+      "from": 69626,
+      "to": 69086,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502398259862016_502398852522496",
+      "title": "手动加粗UV-藏青",
+      "sku": "UV-SD-JC-ZQ",
+      "warehouse": "义乌大货仓",
+      "warnLine": 53700,
+      "type": "stock_change",
+      "from": 7600,
+      "to": 0,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502398259862016_502399133858304",
+      "title": "自动UV-墨绿",
+      "sku": "UV-ZD-ML",
+      "warehouse": "义乌大货仓",
+      "warnLine": 24660,
+      "type": "stock_change",
+      "from": 51850,
+      "to": 75250,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502398259862016_502399133837824",
+      "title": "自动UV-淡蓝",
+      "sku": "UV-ZD-DL",
+      "warehouse": "义乌大货仓",
+      "warnLine": 24210,
+      "type": "stock_change",
+      "from": 31690,
+      "to": 36010,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502398259862016_502399133862400",
+      "title": "自动UV-白色",
+      "sku": "UV-ZD-BS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 23640,
+      "type": "stock_change",
+      "from": 39810,
+      "to": 40260,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "502398259862016_502399133848064",
+      "title": "自动UV-黑色",
+      "sku": "UV-ZD-HS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 84150,
+      "type": "stock_change",
+      "from": 142690,
+      "to": 147910,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "523277613410816_575452008380928",
+      "title": "五折6骨-曜石黑b",
+      "sku": "WZ-6SD-BZ-YSH",
+      "warehouse": "义乌大货仓",
+      "warnLine": 16100,
+      "type": "stock_change",
+      "from": 124600,
+      "to": 124300,
+      "time": 1788394048133
+    },
+    {
+      "itemId": "600927720161792_600927796627968",
+      "title": "自动双骨306配色-黑色(无布套)",
+      "sku": "ZD306SGOPP-HS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 26910,
+      "type": "stock_change",
+      "from": 60300,
+      "to": 58950,
+      "time": 1788394048133
+    },
+    {
       "itemId": "595637606038016_595637869048320",
       "title": "双层伞-白玫瑰",
       "sku": "SC-BMG",
@@ -5001,241 +5254,11 @@
       "from": 63700,
       "to": 62700,
       "time": 1787551312780
-    },
-    {
-      "itemId": "654213056940544_734366326778368",
-      "title": "自动306双骨渐变带布套-海盐蓝",
-      "sku": "306SGJBBT-HYL",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 11970,
-      "to": 13320,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "654213056940544_734366326766080",
-      "title": "自动306双骨渐变带布套-菌林绿",
-      "sku": "306SGJBBT-JLL",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 5760,
-      "to": 6480,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "525366187762176_741226688139776",
-      "title": "扁五折6骨金柄-云裳花蝶",
-      "sku": "BWZ-6K-YSHD",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 14400,
-      "to": 14000,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "525366187762176_741957221347840",
-      "title": "扁五折6骨金柄-金蝴蝶",
-      "sku": "BWZ-6K-JHD",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 0,
-      "to": 400,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "502401421928960_523950731325952",
-      "title": "自动12骨小米双骨黑胶-梧桐米",
-      "sku": "SW-12ZDSG-WTM",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 0,
-      "to": 3000,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "502398259862016_552984115294720",
-      "title": "手动3节细杆UV-藏青",
-      "sku": "UV-SD-3JXG-ZQ",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 0,
-      "to": 7400,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "502398259862016_502399133848064",
-      "title": "自动UV-黑色",
-      "sku": "UV-ZD-HS",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 154390,
-      "to": 160690,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "523277613410816_575452008376832",
-      "title": "五折6骨-天空蓝b",
-      "sku": "WZ-6SD-BZ-TKL",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 62900,
-      "to": 63700,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "523277613410816_575452008380928",
-      "title": "五折6骨-曜石黑b",
-      "sku": "WZ-6SD-BZ-YSH",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 112500,
-      "to": 122500,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "523277613410816_575452008391168",
-      "title": "五折6骨-樱花粉b",
-      "sku": "WZ-6SD-BZ-YHF",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 48700,
-      "to": 60000,
-      "time": 1787548928423
-    },
-    {
-      "itemId": "525366187762176_730641471074816",
-      "title": "扁五折6骨金柄-白玫瑰",
-      "sku": "BWZ-6K-BMG",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 9100,
-      "to": 8100,
-      "time": 1787547712669
-    },
-    {
-      "itemId": "525366187762176_525366485146112",
-      "title": "扁五折6骨金柄-藏青",
-      "sku": "BWZ-6K-ZQ",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 71800,
-      "to": 70300,
-      "time": 1787547712669
-    },
-    {
-      "itemId": "502401421928960_523950731354624",
-      "title": "自动12骨小米双骨黑胶-黑色",
-      "sku": "SW-12ZDSG-HS",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 54266,
-      "to": 53666,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "502401421928960_531379312931328",
-      "title": "自动8骨5055双骨-梧桐米",
-      "sku": "SW-8ZD5055-SG-WTM",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 32400,
-      "to": 31680,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "502401421928960_531379312945664",
-      "title": "自动8骨5055双骨-藏青",
-      "sku": "SW-8ZD5055-SG-ZQ",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 3330,
-      "to": 3240,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "502401421928960_531379312949760",
-      "title": "自动8骨5055双骨-黑色",
-      "sku": "SW-8ZD5055-SG-HS",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 90,
-      "to": 0,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "523277613410816_575452008397312",
-      "title": "五折6骨-藏青b",
-      "sku": "WZ-6SD-BZ-ZQ",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 23400,
-      "to": 22400,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "523277613410816_654210150384128",
-      "title": "五折8骨-藏青b",
-      "sku": "WZ-8SD-BZ-ZQ",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 4600,
-      "to": 4300,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "600927720161792_631707780375040",
-      "title": "自动双骨306配色-粉色(无布套)",
-      "sku": "ZD306SGOPP-FS",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 29770,
-      "to": 29500,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "600927720161792_631707780387328",
-      "title": "自动双骨306配色-藏青(无布套)",
-      "sku": "ZD306SGOPP-ZQ",
-      "warehouse": "义乌大货仓",
-      "type": "stock_change",
-      "from": 94480,
-      "to": 94390,
-      "time": 1787547712670
-    },
-    {
-      "itemId": "525366187762176_525366485142016",
-      "title": "扁五折6骨金柄-抹茶绿",
-      "sku": "BWZ-6K-MCL",
-      "warehouse": "义乌大货仓",
-      "stock": 5500,
-      "warnLine": 300,
-      "type": "recover",
-      "time": 1787537282007
-    },
-    {
-      "itemId": "502400431905280_502400432017927",
-      "title": "遇水开花3节-粉红",
-      "sku": "SYKH-3J-FH",
-      "warehouse": "义乌大货仓",
-      "stock": 2200,
-      "warnLine": 2500,
-      "type": "alert",
-      "time": 1787537282007
-    },
-    {
-      "itemId": "610827367635456_610827467512320",
-      "title": "685弯钩-黄色",
-      "sku": "685WG-HSS",
-      "warehouse": "义乌大货仓",
-      "stock": 8000,
-      "warnLine": 1840,
-      "type": "recover",
-      "time": 1787530081820
     }
   ],
   "source": "erp",
   "lastError": "",
-  "lastCheck": 1788337582823,
+  "lastCheck": 1788398286577,
   "belowState": {
     "414951770450432_414951770456577": false,
     "414951770450432_414951770456578": false,
@@ -7259,7 +7282,7 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 0,
+      "stock": 600,
       "price": 10,
       "sales30": 2040,
       "factor": 1,
@@ -7287,7 +7310,7 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 200,
+      "stock": 640,
       "price": 10,
       "sales30": 3000,
       "factor": 1,
@@ -7301,11 +7324,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 11920,
+      "stock": 15600,
       "price": 10,
-      "sales30": 3640,
+      "sales30": 6840,
       "factor": 1,
-      "warnLine": 3640,
+      "warnLine": 6840,
       "below": false
     },
     {
@@ -7553,11 +7576,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 200,
+      "stock": 100,
       "price": 5.4,
-      "sales30": 300,
+      "sales30": 400,
       "factor": 1,
-      "warnLine": 300,
+      "warnLine": 400,
       "below": true
     },
     {
@@ -7567,11 +7590,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 100,
+      "stock": 0,
       "price": 5.4,
-      "sales30": 300,
+      "sales30": 400,
       "factor": 1,
-      "warnLine": 300,
+      "warnLine": 400,
       "below": true
     },
     {
@@ -7889,7 +7912,7 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 11100,
+      "stock": 10600,
       "price": 6.8,
       "sales30": 2100,
       "factor": 1,
@@ -8031,9 +8054,9 @@
       "active": true,
       "stock": 100,
       "price": 6.8,
-      "sales30": 2100,
+      "sales30": 2300,
       "factor": 1,
-      "warnLine": 2100,
+      "warnLine": 2300,
       "below": true
     },
     {
@@ -8059,9 +8082,9 @@
       "active": true,
       "stock": 19600,
       "price": 6.8,
-      "sales30": 2600,
+      "sales30": 3000,
       "factor": 1,
-      "warnLine": 2600,
+      "warnLine": 3000,
       "below": false
     },
     {
@@ -8099,11 +8122,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 15200,
+      "stock": 13700,
       "price": 6.8,
-      "sales30": 10000,
+      "sales30": 10200,
       "factor": 1,
-      "warnLine": 10000,
+      "warnLine": 10200,
       "below": false
     },
     {
@@ -8113,11 +8136,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 8700,
+      "stock": 7700,
       "price": 7,
-      "sales30": 500,
+      "sales30": 700,
       "factor": 1,
-      "warnLine": 500,
+      "warnLine": 700,
       "below": false
     },
     {
@@ -8155,11 +8178,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 6900,
+      "stock": 5900,
       "price": 7,
-      "sales30": 13000,
+      "sales30": 13300,
       "factor": 1,
-      "warnLine": 13000,
+      "warnLine": 13300,
       "below": true
     },
     {
@@ -8169,11 +8192,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 11400,
+      "stock": 9900,
       "price": 7,
-      "sales30": 15500,
+      "sales30": 15700,
       "factor": 1,
-      "warnLine": 15500,
+      "warnLine": 15700,
       "below": true
     },
     {
@@ -8241,9 +8264,9 @@
       "active": true,
       "stock": 8900,
       "price": 7,
-      "sales30": 1000,
+      "sales30": 1700,
       "factor": 1,
-      "warnLine": 1000,
+      "warnLine": 1700,
       "below": false
     },
     {
@@ -8255,9 +8278,9 @@
       "active": true,
       "stock": 2900,
       "price": 7,
-      "sales30": 3700,
+      "sales30": 4500,
       "factor": 1,
-      "warnLine": 3700,
+      "warnLine": 4500,
       "below": true
     },
     {
@@ -8323,7 +8346,7 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 71100,
+      "stock": 70100,
       "price": 6.8,
       "sales30": 8300,
       "factor": 1,
@@ -8337,11 +8360,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 5400,
+      "stock": 4900,
       "price": 6.8,
-      "sales30": 1400,
+      "sales30": 1700,
       "factor": 1,
-      "warnLine": 1400,
+      "warnLine": 1700,
       "below": false
     },
     {
@@ -8381,9 +8404,9 @@
       "active": true,
       "stock": 0,
       "price": 6.8,
-      "sales30": 21300,
+      "sales30": 23300,
       "factor": 1,
-      "warnLine": 21300,
+      "warnLine": 23300,
       "below": true
     },
     {
@@ -9375,9 +9398,9 @@
       "active": true,
       "stock": 4080,
       "price": 8.3,
-      "sales30": 0,
+      "sales30": 120,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 120,
       "below": false
     },
     {
@@ -9389,9 +9412,9 @@
       "active": true,
       "stock": 4380,
       "price": 8.3,
-      "sales30": 0,
+      "sales30": 120,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 120,
       "below": false
     },
     {
@@ -9417,9 +9440,9 @@
       "active": true,
       "stock": 4080,
       "price": 8.3,
-      "sales30": 0,
+      "sales30": 60,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 60,
       "below": false
     },
     {
@@ -9431,9 +9454,9 @@
       "active": true,
       "stock": 4020,
       "price": 8,
-      "sales30": 0,
+      "sales30": 120,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 120,
       "below": false
     },
     {
@@ -9445,9 +9468,9 @@
       "active": true,
       "stock": 7320,
       "price": 8,
-      "sales30": 0,
+      "sales30": 120,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 120,
       "below": false
     },
     {
@@ -9459,9 +9482,9 @@
       "active": true,
       "stock": 13020,
       "price": 8,
-      "sales30": 0,
+      "sales30": 60,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 60,
       "below": false
     },
     {
@@ -10649,9 +10672,9 @@
       "active": true,
       "stock": 30660,
       "price": 10.6,
-      "sales30": 5460,
+      "sales30": 3420,
       "factor": 1,
-      "warnLine": 5460,
+      "warnLine": 3420,
       "below": false
     },
     {
@@ -10677,9 +10700,9 @@
       "active": true,
       "stock": 64920,
       "price": 10.6,
-      "sales30": 17520,
+      "sales30": 15420,
       "factor": 1,
-      "warnLine": 17520,
+      "warnLine": 15420,
       "below": false
     },
     {
@@ -12329,9 +12352,9 @@
       "active": true,
       "stock": 0,
       "price": 8.8,
-      "sales30": 19440,
+      "sales30": 17040,
       "factor": 1,
-      "warnLine": 19440,
+      "warnLine": 17040,
       "below": true
     },
     {
@@ -13309,9 +13332,9 @@
       "active": true,
       "stock": 0,
       "price": 10.4,
-      "sales30": 10740,
+      "sales30": 10800,
       "factor": 1,
-      "warnLine": 10740,
+      "warnLine": 10800,
       "below": true
     },
     {
@@ -13335,11 +13358,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 12792,
+      "stock": 12492,
       "price": 10.4,
-      "sales30": 38580,
+      "sales30": 39720,
       "factor": 1,
-      "warnLine": 38580,
+      "warnLine": 39720,
       "below": true
     },
     {
@@ -13351,9 +13374,9 @@
       "active": true,
       "stock": 0,
       "price": 10.4,
-      "sales30": 26490,
+      "sales30": 26070,
       "factor": 1,
-      "warnLine": 26490,
+      "warnLine": 26070,
       "below": true
     },
     {
@@ -13365,9 +13388,9 @@
       "active": true,
       "stock": 8244,
       "price": 10.4,
-      "sales30": 23460,
+      "sales30": 24720,
       "factor": 1,
-      "warnLine": 23460,
+      "warnLine": 24720,
       "below": true
     },
     {
@@ -13391,11 +13414,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 240,
+      "stock": 120,
       "price": 10.2,
-      "sales30": 51000,
+      "sales30": 56220,
       "factor": 1,
-      "warnLine": 51000,
+      "warnLine": 56220,
       "below": true
     },
     {
@@ -13447,11 +13470,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 69626,
+      "stock": 67286,
       "price": 10.2,
-      "sales30": 147450,
+      "sales30": 157650,
       "factor": 1,
-      "warnLine": 147450,
+      "warnLine": 157650,
       "below": true
     },
     {
@@ -13645,9 +13668,9 @@
       "active": true,
       "stock": 27360,
       "price": 8.2,
-      "sales30": 8640,
+      "sales30": 8910,
       "factor": 1,
-      "warnLine": 8640,
+      "warnLine": 8910,
       "below": false
     },
     {
@@ -13827,9 +13850,9 @@
       "active": true,
       "stock": 0,
       "price": 5.3,
-      "sales30": 1500,
+      "sales30": 500,
       "factor": 1,
-      "warnLine": 1500,
+      "warnLine": 500,
       "below": true
     },
     {
@@ -13855,9 +13878,9 @@
       "active": true,
       "stock": 0,
       "price": 5.3,
-      "sales30": 2500,
+      "sales30": 4100,
       "factor": 1,
-      "warnLine": 2500,
+      "warnLine": 4100,
       "below": true
     },
     {
@@ -14219,9 +14242,9 @@
       "active": true,
       "stock": 5600,
       "price": 5.1,
-      "sales30": 20200,
+      "sales30": 20400,
       "factor": 1,
-      "warnLine": 20200,
+      "warnLine": 20400,
       "below": true
     },
     {
@@ -14233,9 +14256,9 @@
       "active": true,
       "stock": 0,
       "price": 5.1,
-      "sales30": 22400,
+      "sales30": 21400,
       "factor": 1,
-      "warnLine": 22400,
+      "warnLine": 21400,
       "below": true
     },
     {
@@ -14247,9 +14270,9 @@
       "active": true,
       "stock": 0,
       "price": 4.95,
-      "sales30": 55800,
+      "sales30": 54800,
       "factor": 1,
-      "warnLine": 55800,
+      "warnLine": 54800,
       "below": true
     },
     {
@@ -14275,9 +14298,9 @@
       "active": true,
       "stock": 10800,
       "price": 4.95,
-      "sales30": 170200,
+      "sales30": 170500,
       "factor": 1,
-      "warnLine": 170200,
+      "warnLine": 170500,
       "below": true
     },
     {
@@ -14303,9 +14326,9 @@
       "active": true,
       "stock": 54500,
       "price": 5.25,
-      "sales30": 11500,
+      "sales30": 13300,
       "factor": 1,
-      "warnLine": 11500,
+      "warnLine": 13300,
       "below": false
     },
     {
@@ -14317,9 +14340,9 @@
       "active": true,
       "stock": 0,
       "price": 5.25,
-      "sales30": 24000,
+      "sales30": 26200,
       "factor": 1,
-      "warnLine": 24000,
+      "warnLine": 26200,
       "below": true
     },
     {
@@ -14343,11 +14366,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 7600,
+      "stock": 0,
       "price": 5.1,
-      "sales30": 46600,
+      "sales30": 53700,
       "factor": 1,
-      "warnLine": 46600,
+      "warnLine": 53700,
       "below": true
     },
     {
@@ -14359,9 +14382,9 @@
       "active": true,
       "stock": 0,
       "price": 5.1,
-      "sales30": 17800,
+      "sales30": 18300,
       "factor": 1,
-      "warnLine": 17800,
+      "warnLine": 18300,
       "below": true
     },
     {
@@ -14497,11 +14520,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 51850,
+      "stock": 75250,
       "price": 7.2,
-      "sales30": 24390,
+      "sales30": 24660,
       "factor": 1,
-      "warnLine": 24390,
+      "warnLine": 24660,
       "below": false
     },
     {
@@ -14511,11 +14534,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 31690,
+      "stock": 36010,
       "price": 7.35,
-      "sales30": 19800,
+      "sales30": 24210,
       "factor": 1,
-      "warnLine": 19800,
+      "warnLine": 24210,
       "below": false
     },
     {
@@ -14525,11 +14548,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 39810,
+      "stock": 40260,
       "price": 7.35,
-      "sales30": 23280,
+      "sales30": 23640,
       "factor": 1,
-      "warnLine": 23280,
+      "warnLine": 23640,
       "below": false
     },
     {
@@ -14541,9 +14564,9 @@
       "active": true,
       "stock": 3330,
       "price": 7.35,
-      "sales30": 39600,
+      "sales30": 42660,
       "factor": 1,
-      "warnLine": 39600,
+      "warnLine": 42660,
       "below": true
     },
     {
@@ -14569,9 +14592,9 @@
       "active": true,
       "stock": 5040,
       "price": 7.2,
-      "sales30": 36540,
+      "sales30": 36270,
       "factor": 1,
-      "warnLine": 36540,
+      "warnLine": 36270,
       "below": true
     },
     {
@@ -14609,11 +14632,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 142690,
+      "stock": 147910,
       "price": 7.2,
-      "sales30": 83790,
+      "sales30": 84150,
       "factor": 1,
-      "warnLine": 83790,
+      "warnLine": 84150,
       "below": false
     },
     {
@@ -15227,9 +15250,9 @@
       "active": true,
       "stock": 1600,
       "price": 7.7,
-      "sales30": 900,
+      "sales30": 700,
       "factor": 1,
-      "warnLine": 900,
+      "warnLine": 700,
       "below": false
     },
     {
@@ -15241,9 +15264,9 @@
       "active": true,
       "stock": 57700,
       "price": 6.7,
-      "sales30": 7000,
+      "sales30": 6800,
       "factor": 1,
-      "warnLine": 7000,
+      "warnLine": 6800,
       "below": false
     },
     {
@@ -15309,11 +15332,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 124600,
+      "stock": 124300,
       "price": 6.5,
-      "sales30": 15900,
+      "sales30": 16100,
       "factor": 1,
-      "warnLine": 15900,
+      "warnLine": 16100,
       "below": false
     },
     {
@@ -15339,9 +15362,9 @@
       "active": true,
       "stock": 400,
       "price": 6.7,
-      "sales30": 6900,
+      "sales30": 7200,
       "factor": 1,
-      "warnLine": 6900,
+      "warnLine": 7200,
       "below": true
     },
     {
@@ -15367,9 +15390,9 @@
       "active": true,
       "stock": 4300,
       "price": 6.7,
-      "sales30": 12100,
+      "sales30": 16600,
       "factor": 1,
-      "warnLine": 12100,
+      "warnLine": 16600,
       "below": true
     },
     {
@@ -15395,9 +15418,9 @@
       "active": true,
       "stock": 54900,
       "price": 6.7,
-      "sales30": 13500,
+      "sales30": 14000,
       "factor": 1,
-      "warnLine": 13500,
+      "warnLine": 14000,
       "below": false
     },
     {
@@ -15451,9 +15474,9 @@
       "active": true,
       "stock": 0,
       "price": 7.7,
-      "sales30": 1300,
+      "sales30": 800,
       "factor": 1,
-      "warnLine": 1300,
+      "warnLine": 800,
       "below": true
     },
     {
@@ -15493,9 +15516,9 @@
       "active": true,
       "stock": 19300,
       "price": 6.5,
-      "sales30": 9100,
+      "sales30": 9300,
       "factor": 1,
-      "warnLine": 9100,
+      "warnLine": 9300,
       "below": false
     },
     {
@@ -15829,9 +15852,9 @@
       "active": true,
       "stock": 1500,
       "price": 9.5,
-      "sales30": 1300,
+      "sales30": 1200,
       "factor": 1,
-      "warnLine": 1300,
+      "warnLine": 1200,
       "below": false
     },
     {
@@ -15885,9 +15908,9 @@
       "active": true,
       "stock": 7700,
       "price": 9.5,
-      "sales30": 100,
+      "sales30": 0,
       "factor": 1,
-      "warnLine": 100,
+      "warnLine": 0,
       "below": false
     },
     {
@@ -15941,9 +15964,9 @@
       "active": true,
       "stock": 4400,
       "price": 9.5,
-      "sales30": 100,
+      "sales30": 0,
       "factor": 1,
-      "warnLine": 100,
+      "warnLine": 0,
       "below": false
     },
     {
@@ -16641,9 +16664,9 @@
       "active": true,
       "stock": 19780,
       "price": 7.5,
-      "sales30": 8570,
+      "sales30": 11000,
       "factor": 1,
-      "warnLine": 8570,
+      "warnLine": 11000,
       "below": false
     },
     {
@@ -16655,9 +16678,9 @@
       "active": true,
       "stock": 6280,
       "price": 7.5,
-      "sales30": 4610,
+      "sales30": 4430,
       "factor": 1,
-      "warnLine": 4610,
+      "warnLine": 4430,
       "below": false
     },
     {
@@ -16683,9 +16706,9 @@
       "active": true,
       "stock": 76480,
       "price": 7.5,
-      "sales30": 6950,
+      "sales30": 8120,
       "factor": 1,
-      "warnLine": 6950,
+      "warnLine": 8120,
       "below": false
     },
     {
@@ -16711,9 +16734,9 @@
       "active": true,
       "stock": 27160,
       "price": 7.5,
-      "sales30": 7400,
+      "sales30": 7490,
       "factor": 1,
-      "warnLine": 7400,
+      "warnLine": 7490,
       "below": false
     },
     {
@@ -16725,9 +16748,9 @@
       "active": true,
       "stock": 88630,
       "price": 7.5,
-      "sales30": 15860,
+      "sales30": 16310,
       "factor": 1,
-      "warnLine": 15860,
+      "warnLine": 16310,
       "below": false
     },
     {
@@ -16737,11 +16760,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 60300,
+      "stock": 58950,
       "price": 7.2,
-      "sales30": 23580,
+      "sales30": 26910,
       "factor": 1,
-      "warnLine": 23580,
+      "warnLine": 26910,
       "below": false
     }
   ],
