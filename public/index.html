@@ -105,13 +105,14 @@
     tbody tr.row-zero { background: #fdecec; }
     tbody tr.row-zero:hover { background: #fbdede; }
     tbody tr.row-zero td.stock { color: var(--danger); font-weight: 700; }
-    tbody tr.row-below { background: #fff7e6; }
-    tbody tr.row-below:hover { background: #ffefd4; }
+    tbody tr.row-below { background: #FFF7C0; }
+    tbody tr.row-below:hover { background: #FFEFAE; }
     tbody tr.row-below td.stock { color: var(--warn); font-weight: 700; }
     .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; }
     .badge.zero { background: #fdecea; color: var(--danger); }
     .badge.low { background: #fff0e0; color: var(--warn); }
     .badge.ok { background: #e9f7ef; color: var(--ok); }
+    .badge.move { background: #eef1f6; color: #5b6675; }
     .muted { color: var(--muted); }
     .field { margin-bottom: 16px; }
     .field label { display: block; color: var(--muted); margin-bottom: 6px; font-size: 13px; }
@@ -198,6 +199,7 @@
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button class="btn ghost" :class="{ on: detailTab==='zero' }" @click="detailTab='zero'">🚫 零库存商品 ({{ zeroItems.length }})</button>
         <button class="btn ghost" :class="{ on: detailTab==='low' }" @click="detailTab='low'">⚠️ 低于30天销量 ({{ lowItems.length }})</button>
+        <button class="btn ghost" :class="{ on: detailTab==='gap' }" @click="detailTab='gap'">📉 缺口排序 ({{ gapItems.length }})</button>
       </div>
 
       <!-- 预警表一：零库存 -->
@@ -289,6 +291,52 @@
           <button @click="goLow">跳转</button>
         </div>
       </div>
+
+      <!-- 预警表三：缺口从高到低（预警线 − 库存 降序） -->
+      <div class="panel" v-show="detailTab==='gap'">
+        <h2>
+          <span style="color:var(--warn)">📉 缺口排序（预警线 − 库存）</span>
+          <span class="tip">库存缺口从高到低，越靠前越该优先补货；共 {{ gapItems.length }} 条</span>
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>商品</th><th>SKU</th><th>类目</th><th>仓库</th>
+              <th>库存</th><th>近30天销量</th><th>预警线</th><th>缺口</th><th>标识</th><th>单价</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!pagedGap.length"><td colspan="10" class="muted" style="text-align:center;padding:18px">🎉 当前没有库存缺口商品</td></tr>
+            <tr v-for="it in pagedGap" :key="it.id" :class="it.stock===0 ? 'row-zero' : 'row-below'">
+              <td>{{ it.title }}</td>
+              <td class="muted">{{ it.sku }}</td>
+              <td>{{ it.category }}</td>
+              <td>{{ it.warehouse }}</td>
+              <td class="stock">{{ it.stock }}</td>
+              <td>{{ it.sales30 }}</td>
+              <td>{{ it.warnLine }}</td>
+              <td class="stock">{{ it.warnLine - it.stock }}</td>
+              <td><span :class="['badge', it.stock===0 ? 'zero' : 'low']">{{ it.stock===0 ? '零库存' : '低于销量' }}</span></td>
+              <td>¥{{ it.price }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pager">
+          <button :disabled="gapPage<=1" @click="gapPage--">上一页</button>
+          <span class="info">第 {{ gapPage }} / {{ gapTotalPages }} 页 · 共 {{ gapItems.length }} 条</span>
+          <button :disabled="gapPage>=gapTotalPages" @click="gapPage++">下一页</button>
+          <span class="info">每页</span>
+          <select v-model.number="gapSize">
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+          <span class="info">条</span>
+          <span class="info">跳至</span>
+          <input class="jump-input" type="number" min="1" :max="gapTotalPages" v-model.number="gapJump" @keyup.enter="goGap" />
+          <button @click="goGap">跳转</button>
+        </div>
+      </div>
     </div>
 
     <!-- ============ 变化记录 ============ -->
@@ -315,9 +363,9 @@
           </thead>
           <tbody>
             <tr v-if="!pagedChanges.length"><td colspan="7" class="muted" style="text-align:center;padding:18px">暂无状态变化记录（点「立即检查」后开始监控）</td></tr>
-            <tr v-for="c in pagedChanges" :key="c.time + c.itemId + c.type" :class="rowCls(c.type)">
+            <tr v-for="c in pagedChanges" :key="c.time + c.itemId + c.type" :class="rowCls(c)">
               <td>{{ fmtTime(c.time) }}</td>
-              <td><span :class="['badge', c.type==='alert'?'zero':c.type==='recover'?'ok':'low']">{{ typeLabel(c.type) }}</span></td>
+              <td><span :class="['badge', c.type==='alert' ? 'low' : (c.type==='recover' ? 'ok' : 'move')]">{{ typeLabel(c.type) }}</span></td>
               <td>{{ c.title }}</td>
               <td class="muted">{{ c.sku }}</td>
               <td>{{ c.warehouse }}</td>
@@ -528,6 +576,11 @@
           inventory.value.filter(it => it.stock === 0 && (!onlyActive.value || isActive(it))));
         const lowItems = computed(() =>
           inventory.value.filter(it => it.stock > 0 && it.below && (!onlyActive.value || isActive(it))));
+        // 缺口排序表：库存缺口 = 预警线 − 库存（>0 即有缺口），从高到低，越靠前越该补货
+        const gapItems = computed(() => {
+          const list = inventory.value.filter(it => (!onlyActive.value || isActive(it)) && (it.warnLine - it.stock) > 0);
+          return list.slice().sort((a, b) => (b.warnLine - b.stock) - (a.warnLine - a.stock));
+        });
         // 兼容旧接口返回字段 belowCount（两类之和）
         const belowCount = computed(() => zeroItems.value.length + lowItems.value.length);
 
@@ -545,6 +598,14 @@
         const pagedLow = computed(() =>
           lowItems.value.slice((lowPage.value - 1) * lowSize.value, lowPage.value * lowSize.value));
 
+        // 缺口排序表：分页 + 跳页
+        const gapSize = ref(20);
+        const gapPage = ref(1);
+        const gapTotalPages = computed(() => Math.max(1, Math.ceil(gapItems.value.length / gapSize.value)));
+        const pagedGap = computed(() =>
+          gapItems.value.slice((gapPage.value - 1) * gapSize.value, gapPage.value * gapSize.value));
+        const gapJump = ref(1);
+
         // 跳转到指定页（钳制到合法范围）
         const zeroJump = ref(1);
         const lowJump = ref(1);
@@ -557,12 +618,14 @@
         }
         function goZero() { jumpTo(zeroJump, zeroTotalPages, zeroPage); }
         function goLow() { jumpTo(lowJump, lowTotalPages, lowPage); }
+        function goGap() { jumpTo(gapJump, gapTotalPages, gapPage); }
 
         // 数据变化后，把越界的分页钳回合法范围
         watch([zeroTotalPages, zeroPage], () => { if (zeroPage.value > zeroTotalPages.value) zeroPage.value = zeroTotalPages.value; });
         watch([lowTotalPages, lowPage], () => { if (lowPage.value > lowTotalPages.value) lowPage.value = lowTotalPages.value; });
         // 切换「仅看有销量的在售品」或明细子 tab 时，两张表均回到第一页
-        watch([onlyActive, detailTab], () => { zeroPage.value = 1; lowPage.value = 1; });
+        watch([onlyActive, detailTab], () => { zeroPage.value = 1; lowPage.value = 1; gapPage.value = 1; });
+        watch([gapTotalPages, gapPage], () => { if (gapPage.value > gapTotalPages.value) gapPage.value = gapTotalPages.value; });
 
         const settings = reactive({
           globalFactor: 1,
@@ -628,8 +691,13 @@
           if (t === 'recover') return '恢复';
           return '库存变动';
         }
-        function rowCls(t) {
-          return t === 'alert' ? 'row-zero' : (t === 'recover' ? '' : 'row-below');
+        function rowCls(c) {
+          // 与库存看板一致：按「当前库存状态」判定底色
+          // stock_change 记录本身无 stock 字段，用变化后库存 to 兜底
+          const s = c.stock != null ? c.stock : c.to;
+          if (s === 0) return 'row-zero';
+          if (c.warnLine != null && s < c.warnLine) return 'row-below';
+          return '';
         }
 
         async function loadSettings() {
@@ -846,6 +914,7 @@
           zeroItems, lowItems, onlyActive, activeCount, detailTab,
           zeroSize, zeroPage, zeroTotalPages, pagedZero, zeroJump, goZero,
           lowSize, lowPage, lowTotalPages, pagedLow, lowJump, goLow,
+          gapItems, gapSize, gapPage, gapTotalPages, pagedGap, gapJump, goGap,
           changes, changeFilter, changeSearch, filteredChanges, pagedChanges, typeLabel, rowCls,
           changeSize, changePage, changeTotalPages, changeJump, goChange,
           settings,
