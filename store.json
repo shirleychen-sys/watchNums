@@ -8,6 +8,17 @@
   "itemFactors": {},
   "alerts": [
     {
+      "itemId": "525351226632704_525754475399680",
+      "title": "12骨手动75黑胶-藏青",
+      "sku": "SW-SD-12K75-ZQ",
+      "warehouse": "义乌大货仓",
+      "warnLine": 2400,
+      "type": "stock_change",
+      "from": 7680,
+      "to": 5280,
+      "time": 1788912910533
+    },
+    {
       "itemId": "525366187762176_525366485137920",
       "title": "扁五折6骨金柄-粉红",
       "sku": "BWZ-6K-FH",
@@ -5475,22 +5486,11 @@
       "from": 46900,
       "to": 46720,
       "time": 1788319499236
-    },
-    {
-      "itemId": "502398259862016_502399133837824",
-      "title": "自动UV-淡蓝",
-      "sku": "UV-ZD-DL",
-      "warehouse": "义乌大货仓",
-      "warnLine": 19800,
-      "type": "stock_change",
-      "from": 31150,
-      "to": 30790,
-      "time": 1788319499236
     }
   ],
   "source": "erp",
   "lastError": "",
-  "lastCheck": 1788857204607,
+  "lastCheck": 1788912910533,
   "belowState": {
     "414951770450432_414951770456577": false,
     "414951770450432_414951770456578": false,
@@ -8286,9 +8286,9 @@
       "active": true,
       "stock": 0,
       "price": 6.8,
-      "sales30": 2300,
+      "sales30": 2400,
       "factor": 1,
-      "warnLine": 2300,
+      "warnLine": 2400,
       "below": true
     },
     {
@@ -8356,9 +8356,9 @@
       "active": true,
       "stock": 12400,
       "price": 6.8,
-      "sales30": 11600,
+      "sales30": 11800,
       "factor": 1,
-      "warnLine": 11600,
+      "warnLine": 11800,
       "below": false
     },
     {
@@ -8398,9 +8398,9 @@
       "active": true,
       "stock": 50000,
       "price": 7,
-      "sales30": 14700,
+      "sales30": 14900,
       "factor": 1,
-      "warnLine": 14700,
+      "warnLine": 14900,
       "below": false
     },
     {
@@ -8412,9 +8412,9 @@
       "active": true,
       "stock": 0,
       "price": 7,
-      "sales30": 17800,
+      "sales30": 18000,
       "factor": 1,
-      "warnLine": 17800,
+      "warnLine": 18000,
       "below": true
     },
     {
@@ -8510,9 +8510,9 @@
       "active": true,
       "stock": 20100,
       "price": 7,
-      "sales30": 6700,
+      "sales30": 8200,
       "factor": 1,
-      "warnLine": 6700,
+      "warnLine": 8200,
       "below": false
     },
     {
@@ -8594,9 +8594,9 @@
       "active": true,
       "stock": 2200,
       "price": 6.8,
-      "sales30": 4700,
+      "sales30": 4900,
       "factor": 1,
-      "warnLine": 4700,
+      "warnLine": 4900,
       "below": true
     },
     {
@@ -11632,9 +11632,9 @@
       "active": true,
       "stock": 17300,
       "price": 5.4,
-      "sales30": 200,
+      "sales30": 300,
       "factor": 1,
-      "warnLine": 200,
+      "warnLine": 300,
       "below": false
     },
     {
@@ -11702,9 +11702,9 @@
       "active": true,
       "stock": 15300,
       "price": 5.4,
-      "sales30": 1600,
+      "sales30": 1700,
       "factor": 1,
-      "warnLine": 1600,
+      "warnLine": 1700,
       "below": false
     },
     {
@@ -12554,11 +12554,11 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 7680,
+      "stock": 5280,
       "price": 8.8,
-      "sales30": 0,
+      "sales30": 2400,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 2400,
       "below": false
     },
     {
@@ -13592,9 +13592,9 @@
       "active": true,
       "stock": 6672,
       "price": 10.4,
-      "sales30": 45420,
+      "sales30": 45960,
       "factor": 1,
-      "warnLine": 45420,
+      "warnLine": 45960,
       "below": true
     },
     {
@@ -13606,9 +13606,9 @@
       "active": true,
       "stock": 3660,
       "price": 10.4,
-      "sales30": 25410,
+      "sales30": 26370,
       "factor": 1,
-      "warnLine": 25410,
+      "warnLine": 26370,
       "below": true
     },
     {
@@ -13648,9 +13648,9 @@
       "active": true,
       "stock": 0,
       "price": 10.2,
-      "sales30": 46380,
+      "sales30": 45780,
       "factor": 1,
-      "warnLine": 46380,
+      "warnLine": 45780,
       "below": true
     },
     {
@@ -13704,9 +13704,9 @@
       "active": true,
       "stock": 63206,
       "price": 10.2,
-      "sales30": 158940,
+      "sales30": 160440,
       "factor": 1,
-      "warnLine": 158940,
+      "warnLine": 160440,
       "below": true
     },
     {
@@ -13900,9 +13900,9 @@
       "active": true,
       "stock": 27180,
       "price": 8.2,
-      "sales30": 9000,
+      "sales30": 8910,
       "factor": 1,
-      "warnLine": 9000,
+      "warnLine": 8910,
       "below": false
     },
     {
@@ -13970,9 +13970,9 @@
       "active": true,
       "stock": 90,
       "price": 7.9,
-      "sales30": 1350,
+      "sales30": 1260,
       "factor": 1,
-      "warnLine": 1350,
+      "warnLine": 1260,
       "below": true
     },
     {
@@ -14474,9 +14474,9 @@
       "active": true,
       "stock": 8300,
       "price": 5.1,
-      "sales30": 16100,
+      "sales30": 16500,
       "factor": 1,
-      "warnLine": 16100,
+      "warnLine": 16500,
       "below": true
     },
     {
@@ -14530,9 +14530,9 @@
       "active": true,
       "stock": 15000,
       "price": 4.95,
-      "sales30": 222600,
+      "sales30": 226000,
       "factor": 1,
-      "warnLine": 222600,
+      "warnLine": 226000,
       "below": true
     },
     {
@@ -14586,9 +14586,9 @@
       "active": true,
       "stock": 8100,
       "price": 5.25,
-      "sales30": 6500,
+      "sales30": 7500,
       "factor": 1,
-      "warnLine": 6500,
+      "warnLine": 7500,
       "below": false
     },
     {
@@ -14600,9 +14600,9 @@
       "active": true,
       "stock": 3200,
       "price": 5.1,
-      "sales30": 59500,
+      "sales30": 62500,
       "factor": 1,
-      "warnLine": 59500,
+      "warnLine": 62500,
       "below": true
     },
     {
@@ -14614,9 +14614,9 @@
       "active": true,
       "stock": 0,
       "price": 5.1,
-      "sales30": 15500,
+      "sales30": 15700,
       "factor": 1,
-      "warnLine": 15500,
+      "warnLine": 15700,
       "below": true
     },
     {
@@ -14628,9 +14628,9 @@
       "active": true,
       "stock": 11400,
       "price": 5.1,
-      "sales30": 139400,
+      "sales30": 142400,
       "factor": 1,
-      "warnLine": 139400,
+      "warnLine": 142400,
       "below": true
     },
     {
@@ -14754,9 +14754,9 @@
       "active": true,
       "stock": 72280,
       "price": 7.2,
-      "sales30": 25650,
+      "sales30": 26910,
       "factor": 1,
-      "warnLine": 25650,
+      "warnLine": 26910,
       "below": false
     },
     {
@@ -14824,9 +14824,9 @@
       "active": true,
       "stock": 1980,
       "price": 7.2,
-      "sales30": 36000,
+      "sales30": 37170,
       "factor": 1,
-      "warnLine": 36000,
+      "warnLine": 37170,
       "below": true
     },
     {
@@ -14838,9 +14838,9 @@
       "active": true,
       "stock": 0,
       "price": 7.2,
-      "sales30": 5400,
+      "sales30": 6300,
       "factor": 1,
-      "warnLine": 5400,
+      "warnLine": 6300,
       "below": true
     },
     {
@@ -14866,9 +14866,9 @@
       "active": true,
       "stock": 131980,
       "price": 7.2,
-      "sales30": 87930,
+      "sales30": 91800,
       "factor": 1,
-      "warnLine": 87930,
+      "warnLine": 91800,
       "below": false
     },
     {
@@ -15454,9 +15454,9 @@
       "active": true,
       "stock": 12500,
       "price": 7.2,
-      "sales30": 0,
+      "sales30": 700,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 700,
       "below": false
     },
     {
@@ -15496,9 +15496,9 @@
       "active": true,
       "stock": 54800,
       "price": 6.7,
-      "sales30": 6100,
+      "sales30": 6300,
       "factor": 1,
-      "warnLine": 6100,
+      "warnLine": 6300,
       "below": false
     },
     {
@@ -15552,9 +15552,9 @@
       "active": true,
       "stock": 3800,
       "price": 7.2,
-      "sales30": 1100,
+      "sales30": 1200,
       "factor": 1,
-      "warnLine": 1100,
+      "warnLine": 1200,
       "below": false
     },
     {
@@ -15566,9 +15566,9 @@
       "active": true,
       "stock": 124800,
       "price": 6.5,
-      "sales30": 4700,
+      "sales30": 4900,
       "factor": 1,
-      "warnLine": 4700,
+      "warnLine": 4900,
       "below": false
     },
     {
@@ -15650,9 +15650,9 @@
       "active": true,
       "stock": 49300,
       "price": 6.7,
-      "sales30": 10600,
+      "sales30": 10200,
       "factor": 1,
-      "warnLine": 10600,
+      "warnLine": 10200,
       "below": false
     },
     {
@@ -15720,9 +15720,9 @@
       "active": true,
       "stock": 62600,
       "price": 6.7,
-      "sales30": 7700,
+      "sales30": 7900,
       "factor": 1,
-      "warnLine": 7700,
+      "warnLine": 7900,
       "below": false
     },
     {
@@ -15734,9 +15734,9 @@
       "active": true,
       "stock": 5000,
       "price": 7.2,
-      "sales30": 2200,
+      "sales30": 2700,
       "factor": 1,
-      "warnLine": 2200,
+      "warnLine": 2700,
       "below": false
     },
     {
@@ -15748,9 +15748,9 @@
       "active": true,
       "stock": 18200,
       "price": 6.5,
-      "sales30": 6200,
+      "sales30": 6300,
       "factor": 1,
-      "warnLine": 6200,
+      "warnLine": 6300,
       "below": false
     },
     {
@@ -15776,9 +15776,9 @@
       "active": true,
       "stock": -100,
       "price": 6.5,
-      "sales30": 300,
+      "sales30": 600,
       "factor": 1,
-      "warnLine": 300,
+      "warnLine": 600,
       "below": true
     },
     {
@@ -16938,9 +16938,9 @@
       "active": true,
       "stock": 76660,
       "price": 7.5,
-      "sales30": 8930,
+      "sales30": 10730,
       "factor": 1,
-      "warnLine": 8930,
+      "warnLine": 10730,
       "below": false
     },
     {
@@ -16994,9 +16994,9 @@
       "active": true,
       "stock": 74250,
       "price": 7.2,
-      "sales30": 34850,
+      "sales30": 34760,
       "factor": 1,
-      "warnLine": 34850,
+      "warnLine": 34760,
       "below": false
     }
   ],
