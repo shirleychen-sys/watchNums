@@ -71,7 +71,7 @@ function writeStore(store) {
    2) 把它的 URL 填到 .env 的 ERP_API_URL
    3) 若接口需要登录态/token：ERP_TOKEN(Bearer) / ERP_API_KEY(X-API-Key) / ERP_COOKIE(Cookie)
    4) 在下方 buildItemFromErp() 把 ERP 字段映射到标准结构
-      { id, title, sku, category, warehouse, stock, price, sales30 }
+      { id, title, sku, category, warehouse, stock, price, sales30, availableNum, purchaseNum }
    5) 重启 server.js，看板即显示真实数据
    ==================================================================== */
 
@@ -96,7 +96,11 @@ function buildItemFromErp(row, i) {
     stock: Number(pick('sellableNum', 'availableStock', 'availableInStock', 'goodStock', 'totalAvailableStock', 'stock', 'qty', 'inventory', 'onHand', 'kc', 'num') || 0),
     price: Number(pick('sellingPrice', 'salePrice', 'price', 'wholesalePrice', 'cost', 'priceNow') || 0),
     // 近30天销量：快麦字段为 sale30Days；若想用「日均」改 avgSale30Days
-    sales30: Number(pick('sale30Days', 'sale30', 'sold30', 'salesLast30', 'saleNum30') || 0)
+    sales30: Number(pick('sale30Days', 'sale30', 'sold30', 'salesLast30', 'saleNum30') || 0),
+    // 实际可用数：快麦 availableStock（可用库存）；总可用 totalAvailableStock 兜底
+    availableNum: Number(pick('availableStock', 'totalAvailableStock', 'availableInStock') || 0),
+    // 采购在途数：快麦 purchaseNum（采购在途）；通用候选兜底
+    purchaseNum: Number(pick('purchaseNum', 'purchaseInStock', 'purchaseTransitNum', 'onWayNum') || 0)
   };
 }
 

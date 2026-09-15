@@ -171,6 +171,7 @@
         <button :class="{ active: tab==='dashboard' }" @click="switchTab('dashboard')">库存看板</button>
         <button :class="{ active: tab==='changes' }" @click="switchTab('changes')">变化记录</button>
         <button :class="{ active: tab==='inout' }" @click="switchTab('inout')">出入库统计</button>
+        <button :class="{ active: tab==='plan' }" @click="switchTab('plan')">可能需要排单</button>
         <button :class="{ active: tab==='settings' }" @click="switchTab('settings')">设置</button>
       </nav>
     </header>
@@ -512,6 +513,52 @@
       </div>
     </div>
 
+    <!-- ============ 可能需要排单 ============ -->
+    <div class="wrap" v-show="tab==='plan'">
+      <div class="panel">
+        <h2>可能需要排单
+          <span class="tip">实际可用数 + 采购在途数 &lt; 近30天销量 的商品，可能需要排单生产；共 {{ planItems.length }} 条（按缺口从高到低）</span>
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>商品</th><th>SKU</th><th>类目</th><th>仓库</th>
+              <th>实际可用数</th><th>采购在途数</th><th>可用合计</th><th>近30天销量</th><th>缺口</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!pagedPlan.length"><td colspan="9" class="muted" style="text-align:center;padding:18px">🎉 暂无可能需要排单的商品（数据取自最近一次库存检查，新增字段需重新「立即检查」后生效）</td></tr>
+            <tr v-for="it in pagedPlan" :key="it.id" class="row-below">
+              <td>{{ it.title }}</td>
+              <td class="muted">{{ it.sku }}</td>
+              <td>{{ it.category }}</td>
+              <td>{{ it.warehouse }}</td>
+              <td>{{ it.availableNum }}</td>
+              <td>{{ it.purchaseNum }}</td>
+              <td>{{ Number(it.availableNum) + Number(it.purchaseNum) }}</td>
+              <td>{{ it.sales30 }}</td>
+              <td class="stock">{{ it.sales30 - (Number(it.availableNum) + Number(it.purchaseNum)) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pager">
+          <button :disabled="planPage<=1" @click="planPage--">上一页</button>
+          <span class="info">第 {{ planPage }} / {{ planTotalPages }} 页 · 共 {{ planItems.length }} 条</span>
+          <button :disabled="planPage>=planTotalPages" @click="planPage++">下一页</button>
+          <span class="info">每页</span>
+          <select v-model.number="planSize">
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+          <span class="info">条</span>
+          <span class="info">跳至</span>
+          <input class="jump-input" type="number" min="1" :max="planTotalPages" v-model.number="planJump" @keyup.enter="goPlan" />
+          <button @click="goPlan">跳转</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ============ 设置 ============ -->
     <div class="wrap" v-show="tab==='settings'">
       <div class="panel">
@@ -583,6 +630,27 @@
         });
         // 兼容旧接口返回字段 belowCount（两类之和）
         const belowCount = computed(() => zeroItems.value.length + lowItems.value.length);
+
+        // 可能需要排单：实际可用数 + 采购在途数 < 近30天销量（需重新检查拉取到新字段后才可判定）
+        const planItems = computed(() => {
+          const list = inventory.value.filter(it =>
+            (!onlyActive.value || isActive(it)) &&
+            it.availableNum != null && it.purchaseNum != null &&
+            (Number(it.availableNum) + Number(it.purchaseNum)) < Number(it.sales30));
+          // 缺口 = 近30天销量 −（实际可用数 + 采购在途数），从高到低，越靠前越急需排单
+          return list.slice().sort((a, b) =>
+            (Number(b.sales30) - Number(b.availableNum) - Number(b.purchaseNum)) -
+            (Number(a.sales30) - Number(a.availableNum) - Number(a.purchaseNum)));
+        });
+        // 排单表：分页 + 跳页
+        const planSize = ref(20);
+        const planPage = ref(1);
+        const planTotalPages = computed(() => Math.max(1, Math.ceil(planItems.value.length / planSize.value)));
+        const pagedPlan = computed(() =>
+          planItems.value.slice((planPage.value - 1) * planSize.value, planPage.value * planSize.value));
+        const planJump = ref(1);
+        function goPlan() { jumpTo(planJump, planTotalPages, planPage); }
+        watch([planTotalPages, planPage], () => { if (planPage.value > planTotalPages.value) planPage.value = planTotalPages.value; });
 
         // 零库存表：分页 + 跳页
         const zeroSize = ref(20);
@@ -749,6 +817,7 @@
           if (t === 'settings') loadSettings();
           if (t === 'changes') loadChanges();
           if (t === 'inout' && !inoutData.value && !inoutLoading.value) loadInout();
+          if (t === 'plan') loadInventory(); // 排单列表依赖库存快照，进入时刷新一次
         }
 
         /* ----------------- 出入库统计（按月 × 款式） ---------------- */
@@ -832,28 +901,8 @@
         // 导出表格（客户端生成，基于当前已拉取数据，不触发新请求）
         // 说明：CSV 不支持列宽，Excel 打开会按默认窄宽截断长文本；
         // 故导出为带 <col width> 列宽的 Excel(.xls)，每格完整显示。
-        function exportCsv(kind) {
-          const d = inoutData.value;
-          if (!d) return;
-          let header, rows, widths;
-          if (kind === 'month') {
-            header = ['月份', '入库款式数', '入库件数', '出库款式数', '出库件数', '净变动'];
-            rows = (d.monthList || []).map(m => [m.month, m.inStyles, m.inQty, m.outStyles, m.outQty, m.netQty]);
-            widths = [120, 100, 100, 100, 100, 100];
-          } else {
-            const isItem = d.groupBy === 'item';
-            if (isItem) {
-              header = ['商品标题', '入库件数', '出库件数', '净变动', '活跃月数'];
-              rows = (d.styleList || []).map(s => [s.styleKey, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
-              rows.sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'zh-Hans-CN')); // 商品标题首字母升序
-              widths = [300, 100, 100, 100, 100];
-            } else {
-              header = ['款式编码', '规格', '入库件数', '出库件数', '净变动', '活跃月数'];
-              rows = (d.styleList || []).map(s => [s.styleKey, s.name, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
-              rows.sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'zh-Hans-CN')); // 规格首字母升序
-              widths = [160, 340, 100, 100, 100, 100];
-            }
-          }
+        // downloadXls：通用导出（出入库统计与排单列表共用同一套表格下载样式）
+        function downloadXls(filename, header, rows, widths) {
           const esc = v => {
             const s = (v == null ? '' : String(v));
             return /[&<>"']/.test(s)
@@ -866,12 +915,42 @@
           const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body><table border="1">' + colgroup + thead + tbody + '</table></body></html>';
           const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
           const a = document.createElement('a');
-          const range = `${d.from || ''}_${d.to || ''}`;
           a.href = URL.createObjectURL(blob);
-          a.download = `出入库统计_${kind === 'month' ? '按月' : (d.groupBy === 'item' ? '商品款' : '款式')}_${range}.xls`;
+          a.download = filename;
           document.body.appendChild(a); a.click(); a.remove();
           URL.revokeObjectURL(a.href);
         }
+        function exportCsv(kind) {
+          const d = inoutData.value;
+          if (!d) return;
+          let header, rows, widths, label;
+          if (kind === 'month') {
+            header = ['月份', '入库款式数', '入库件数', '出库款式数', '出库件数', '净变动'];
+            rows = (d.monthList || []).map(m => [m.month, m.inStyles, m.inQty, m.outStyles, m.outQty, m.netQty]);
+            widths = [120, 100, 100, 100, 100, 100];
+            label = '按月';
+          } else {
+            const isItem = d.groupBy === 'item';
+            if (isItem) {
+              header = ['商品标题', '入库件数', '出库件数', '净变动', '活跃月数'];
+              rows = (d.styleList || []).map(s => [s.styleKey, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
+              rows.sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'zh-Hans-CN')); // 商品标题首字母升序
+              widths = [300, 100, 100, 100, 100];
+              label = '商品款';
+            } else {
+              header = ['款式编码', '规格', '入库件数', '出库件数', '净变动', '活跃月数'];
+              rows = (d.styleList || []).map(s => [s.styleKey, s.name, s.inQty, s.outQty, s.inQty - s.outQty, s.monthsActive]);
+              rows.sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'zh-Hans-CN')); // 规格首字母升序
+              widths = [160, 340, 100, 100, 100, 100];
+              label = '款式';
+            }
+          }
+          const range = `${d.from || ''}_${d.to || ''}`;
+          downloadXls(`出入库统计_${label}_${range}.xls`, header, rows, widths);
+        }
+
+        // 排单列表导出：与出入库统计同一套 .xls 表格样式（带列宽）
+
 
         async function loadInout() {
           inoutLoading.value = true; inoutError.value = '';
@@ -915,6 +994,7 @@
           zeroSize, zeroPage, zeroTotalPages, pagedZero, zeroJump, goZero,
           lowSize, lowPage, lowTotalPages, pagedLow, lowJump, goLow,
           gapItems, gapSize, gapPage, gapTotalPages, pagedGap, gapJump, goGap,
+          planItems, planSize, planPage, planTotalPages, pagedPlan, planJump, goPlan,
           changes, changeFilter, changeSearch, filteredChanges, pagedChanges, typeLabel, rowCls,
           changeSize, changePage, changeTotalPages, changeJump, goChange,
           settings,
