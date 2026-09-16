@@ -12,6 +12,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // 零依赖读取 .env（没有 .env 文件就忽略；已存在的环境变量优先）
 try {
@@ -26,6 +27,23 @@ try {
 
 const STORE_PATH = path.join(__dirname, 'store.json');
 const PORT = process.env.PORT || 3000;
+
+/* ============ 发布分享配置 ============ */
+// 访问口令：share.config.json { "password": "xxx" } 或环境变量 SHARE_PASSWORD。
+// 配置了口令后，所有页面和接口都需要先在 /login 验证（Cookie 保持 30 天）。
+const SHARE_CFG = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'share.config.json'), 'utf8')); }
+  catch (e) { return {}; }
+})();
+const SHARE_PASSWORD = process.env.SHARE_PASSWORD || SHARE_CFG.password || '';
+// 快照模式：目录中没有 .env（缺 ERP_API_URL / ERP_COOKIE）时，
+// 仅展示 store.json 里的库存快照，不启动调度器、不拉取 ERP、不允许改设置。
+const SNAPSHOT_MODE = !(process.env.ERP_API_URL && process.env.ERP_COOKIE);
+// 分享版附加限制（share.config.json 中配置，仅影响带口令的分享部署；本地无 share.config.json 时均不生效）：
+//   noCheckNow: true      → 禁用「立即检查」（调度器仍按设置频率自动刷新，数据保持最新）
+//   noSettingsWrite: true → 禁用「保存设置」（设置页仅可查看）
+const NO_CHECK_NOW = SNAPSHOT_MODE || SHARE_CFG.noCheckNow === true;
+const NO_SETTINGS_WRITE = SNAPSHOT_MODE || SHARE_CFG.noSettingsWrite === true;
 
 const DEFAULT_STORE = {
   globalFactor: 1,           // 全局预警系数：库存 < 近30天销量 × 系数 即报警（默认 1 = 低于30天销量即警告）
@@ -651,6 +669,55 @@ function aggregateInOut(rows, groupBy = 'sku') {
 /* ----------------------------- Express API ----------------------------- */
 const app = express();
 app.use(express.json());
+
+// ---- 访问口令保护（配置了口令才启用；须在静态目录之前） ----
+const AUTH_COOKIE = 'wn_auth';
+const AUTH_TOKEN = SHARE_PASSWORD
+  ? crypto.createHash('sha256').update('wn:' + SHARE_PASSWORD).digest('hex')
+  : '';
+function isAuthed(req) {
+  const m = String(req.headers.cookie || '').match(new RegExp('(?:^|;\\s*)' + AUTH_COOKIE + '=([^;]+)'));
+  return !!AUTH_TOKEN && m && m[1] === AUTH_TOKEN;
+}
+const LOGIN_HTML = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>库存监控 · 访问验证</title>
+<style>
+ body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:#f4f6fb;display:flex;align-items:center;justify-content:center;min-height:100vh}
+ .card{background:#fff;border:1px solid #e6e9f0;border-radius:12px;padding:34px 38px;box-shadow:0 2px 10px rgba(20,30,60,.06);width:300px;text-align:center}
+ h1{font-size:17px;margin:0 0 6px;font-weight:700} p{color:#8a93a3;font-size:12px;margin:0 0 18px}
+ input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e6e9f0;border-radius:8px;font-size:14px;text-align:center;outline:none}
+ input:focus{border-color:#2f6fed}
+ button{width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:#2f6fed;color:#fff;font-size:14px;cursor:pointer}
+ button:hover{opacity:.9}
+ .err{color:#e74c3c;font-size:12px;height:16px;margin-top:10px}
+</style></head><body><div class="card">
+<h1>📦 库存监控看板</h1><p>请输入访问口令</p>
+<input id="pw" type="password" placeholder="访问口令" autofocus>
+<button onclick="go()">进 入</button>
+<div class="err" id="err"></div></div>
+<script>
+var i=document.getElementById('pw');
+i.addEventListener('keyup',function(e){if(e.key==='Enter')go();});
+function go(){fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:i.value})})
+ .then(function(r){return r.json();})
+ .then(function(d){if(d.ok){location.href='/';}else{document.getElementById('err').textContent='口令错误，请重试';}})
+ .catch(function(){document.getElementById('err').textContent='请求失败，请重试';});}
+</script></body></html>`;
+app.use((req, res, next) => {
+  if (!SHARE_PASSWORD || isAuthed(req)) return next();
+  if (req.method === 'GET' && req.path === '/login') return res.send(LOGIN_HTML);
+  if (req.method === 'POST' && req.path === '/login') {
+    const pw = (req.body && req.body.password) || '';
+    if (pw && pw === SHARE_PASSWORD) {
+      res.setHeader('Set-Cookie', `${AUTH_COOKIE}=${AUTH_TOKEN}; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax`);
+      return res.json({ ok: true });
+    }
+    return res.status(401).json({ ok: false, error: '口令错误' });
+  }
+  if (req.path.startsWith('/api/')) return res.status(401).json({ ok: false, error: '未登录' });
+  return res.redirect('/login');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 库存看板数据
@@ -663,7 +730,10 @@ app.get('/api/inventory', (req, res) => {
     globalFactor: store.globalFactor,
     belowCount: inventory.filter(it => it.below).length,
     source: store.source,
-    error: store.lastError
+    error: store.lastError,
+    mode: SNAPSHOT_MODE ? 'snapshot' : 'erp',
+    noCheckNow: NO_CHECK_NOW,
+    noSettingsWrite: NO_SETTINGS_WRITE
   });
 });
 
@@ -742,6 +812,7 @@ app.get('/api/inout-stats', async (req, res) => {
 
 // 立即检查一次
 app.post('/api/check-now', async (req, res) => {
+  if (NO_CHECK_NOW) return res.status(400).json({ ok: false, error: '分享版：不支持手动实时检查（数据按设定频率自动更新）' });
   try {
     const { newAlerts } = await checkNow();
     res.json({ ok: true, newAlerts });
@@ -763,6 +834,7 @@ app.get('/api/settings', (req, res) => {
 
 // 保存设置（预警系数/频率/通知/每物件系数），频率变化时重建调度
 app.post('/api/settings', (req, res) => {
+  if (NO_SETTINGS_WRITE) return res.status(400).json({ ok: false, error: '分享版：不支持修改设置' });
   try {
     const store = readStore();
     const body = req.body || {};
@@ -809,6 +881,11 @@ function startScheduler() {
 
 app.listen(PORT, () => {
   console.log(`淘宝库存监控已启动： http://localhost:${PORT}`);
-  checkNow().catch(e => console.error('[启动检查失败]', e));       // 启动即检查一次，保证看板有数据
-  startScheduler();
+  if (SHARE_PASSWORD) console.log('[访问保护] 已启用访问口令');
+  if (SNAPSHOT_MODE) {
+    console.log('[快照模式] 未检测到 .env ERP 配置，仅展示 store.json 库存快照（不拉取 ERP、不启动调度）');
+  } else {
+    checkNow().catch(e => console.error('[启动检查失败]', e));       // 启动即检查一次，保证看板有数据
+    startScheduler();
+  }
 });

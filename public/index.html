@@ -179,6 +179,12 @@
     <div class="banner error" v-if="source==='error'">
       ❌ 真实 ERP 拉取失败：{{ errMsg || '未知错误' }}。当前显示为<span v-if="inventory.length">上次成功拉取的数据</span><span v-else>空数据</span>，请检查 Cookie / 接口配置后重启 <code>server.js</code>。
     </div>
+    <div class="banner mock" v-if="isSnapshot">
+      📄 当前为<strong>分享快照</strong>：数据截至 {{ fmtTime(lastCheck) }}，仅支持查看，不支持实时刷新。如需最新数据请联系发布者。
+    </div>
+    <div class="banner mock" v-if="!isSnapshot && (noCheckNow || noSettingsWrite)">
+      🔗 当前为<strong>分享版</strong>：数据按设定频率自动更新{{ noCheckNow ? '，不支持手动「立即检查」' : '' }}{{ noSettingsWrite ? '，设置仅可查看' : '' }}。
+    </div>
 
     <!-- ============ 库存看板 ============ -->
     <div class="wrap" v-show="tab==='dashboard'">
@@ -193,7 +199,7 @@
       <div class="actionbar">
         <label class="chk"><input type="checkbox" v-model="onlyActive" /> 仅看有销量的在售品</label>
         <span class="info" v-if="onlyActive">已隐藏 {{ inventory.length - activeCount }} 条无销量/未上架商品</span>
-        <button class="btn" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
+        <button class="btn" v-if="!isSnapshot && !noCheckNow" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
       </div>
 
       <!-- 明细子 tab 切换：零库存 / 低于30天销量 -->
@@ -349,7 +355,7 @@
           <button class="btn ghost" :class="{ on: changeFilter==='stock_change' }" @click="changeFilter='stock_change'">仅库存变动</button>
         </div>
         <input class="search-input" v-model="changeSearch" placeholder="搜索" style="width:200px" />
-        <button class="btn" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
+        <button class="btn" v-if="!isSnapshot && !noCheckNow" :disabled="checking" @click="checkNow">{{ checking ? '检查中…' : '立即检查' }}</button>
       </div>
 
       <div class="panel">
@@ -403,7 +409,8 @@
         <h2>📊 出入库统计（按月 × 款式）
           <span class="tip">数据来源：快麦报表中心「出入库记录」；款式按 SKU（规格商家编码）聚合；件数 = 库存变动量（入库 + / 出库 −）</span>
         </h2>
-        <div class="actionbar">
+        <div class="banner mock" v-if="isSnapshot">📄 快照模式不支持出入库统计（需要 ERP 实时接口），请查看「库存看板」的快照数据。</div>
+        <div class="actionbar" v-if="!isSnapshot">
           <div class="inout-filter-row">
             <div class="field" style="margin:0">
               <label>起始时间</label>
@@ -566,17 +573,18 @@
         <div class="inline">
           <div class="field">
             <label>全局预警系数（库存 &lt; 近30天销量 × 系数 即报警，默认 1）</label>
-            <input type="number" step="0.1" min="0" v-model="settings.globalFactor" />
+            <input type="number" step="0.1" min="0" v-model="settings.globalFactor" :disabled="noSettingsWrite" />
             <div class="hint">系数 = 1：库存不足覆盖近30天销量即警告；&lt;1 更宽松，&gt;1 更严格；0 = 关闭预警</div>
           </div>
           <div class="field">
             <label>检查频率（分钟，默认 60）</label>
-            <input type="number" min="1" v-model="settings.frequencyMinutes" />
+            <input type="number" min="1" v-model="settings.frequencyMinutes" :disabled="noSettingsWrite" />
             <div class="hint">保存后调度器会按新频率重建</div>
           </div>
         </div>
         <div style="margin-top:8px">
-          <button class="btn" @click="saveSettings">保存设置</button>
+          <button class="btn" @click="saveSettings" :disabled="noSettingsWrite" :title="noSettingsWrite ? '分享版不支持修改设置' : ''">保存设置</button>
+          <span class="hint" v-if="noSettingsWrite" style="margin-left:10px">分享版不支持修改设置</span>
         </div>
       </div>
 
@@ -584,12 +592,12 @@
         <h2>通知配置 <span class="tip">（留空 = 仅记录不发送；演示阶段默认空）</span></h2>
         <div class="field">
           <label>邮箱通知（收件地址）</label>
-          <input type="text" v-model="settings.notifications.email" placeholder="ops@example.com" />
+          <input type="text" v-model="settings.notifications.email" placeholder="ops@example.com" :disabled="noSettingsWrite" />
           <div class="hint">真实发送还需在启动环境配置 SMTP_HOST / SMTP_USER / SMTP_PASS / SMTP_FROM</div>
         </div>
         <div class="field">
           <label>微信通知（PushPlus token 或 Server酱 key）</label>
-          <input type="text" v-model="settings.notifications.wechat" placeholder="PushPlus token / sctpxxxx" />
+          <input type="text" v-model="settings.notifications.wechat" placeholder="PushPlus token / sctpxxxx" :disabled="noSettingsWrite" />
           <div class="hint">以 <span class="code">sctp</span> 开头识别为 Server酱，其余按 PushPlus 处理</div>
         </div>
       </div>
@@ -611,6 +619,10 @@
         const toast = ref('');
         const source = ref('erp'); // 'erp' 真实 / 'error' 拉取失败
         const errMsg = ref(''); // 拉取失败原因（source==='error' 时显示）
+        const appMode = ref('erp'); // 'erp' 实时 / 'snapshot' 发布快照（无 ERP 配置）
+        const isSnapshot = computed(() => appMode.value === 'snapshot');
+        const noCheckNow = ref(false);      // 分享版：禁用「立即检查」（数据仍自动定时刷新）
+        const noSettingsWrite = ref(false); // 分享版：禁用「保存设置」（设置页仅可查看）
 
         // 预警分类：零库存 与 低于30天销量 互斥（零库存优先）
         // onlyActive：默认勾选，仅看「有销量的在售品」（activeStatus===1 且 sales30>0），隐藏无销量/未上架 SKU
@@ -726,6 +738,9 @@
           belowCount.value = data.belowCount;
           source.value = data.source || 'erp';
           errMsg.value = data.error || '';
+          appMode.value = data.mode || 'erp';
+          noCheckNow.value = data.noCheckNow === true;
+          noSettingsWrite.value = data.noSettingsWrite === true;
         }
 
         // 状态变化记录（跌破/恢复 + 库存变动），后端按时间倒序存于 store.alerts
@@ -989,7 +1004,7 @@
         });
 
         return {
-          tab, inventory, lastCheck, globalFactor, belowCount, checking, toast, source, errMsg,
+          tab, inventory, lastCheck, globalFactor, belowCount, checking, toast, source, errMsg, appMode, isSnapshot,
           zeroItems, lowItems, onlyActive, activeCount, detailTab,
           zeroSize, zeroPage, zeroTotalPages, pagedZero, zeroJump, goZero,
           lowSize, lowPage, lowTotalPages, pagedLow, lowJump, goLow,
@@ -1001,6 +1016,7 @@
           inoutTab, inoutFrom, inoutTo, inoutWh, inoutLoading, inoutError, inoutData, inoutGroupBy,
           styleSearch, styleSort, styleSize, stylePage, styleJump, filteredStyles, pagedStyles, styleTotalPages, goStyle,
           loadInout, setGroupBy, exportCsv,
+          noCheckNow, noSettingsWrite,
           fmtTime, checkNow, saveSettings, switchTab
         };
       }
