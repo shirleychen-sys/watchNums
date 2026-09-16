@@ -587,6 +587,9 @@ async function fetchStockIoRows(fromMs, toMs, warehouseId) {
 //   groupBy='sku'（默认）：按 SKU 规格(sku_outer_id+规格名) 聚合，最细粒度
 //   groupBy='item'：按商品标题(item_title) 聚合，归到「款」级别
 function aggregateInOut(rows, groupBy = 'sku') {
+  // 快麦 stockio 报表返回的数值是带千分位逗号的字符串（如 "6,600"/"-10,143"），
+  // Number() 直接解析会得 NaN，导致大额记录被当成 0 丢弃；必须先去掉逗号再转数字
+  const toNum = (v) => Number(typeof v === 'string' ? v.replace(/,/g, '') : v) || 0;
   const useItem = groupBy === 'item';
   const months = {};       // month -> { inStyles:Set, outStyles:Set, inQty, outQty, inDocs, outDocs }
   const styleByMonth = {}; // month -> styleKey -> { name, inQty, outQty, inDocs, outDocs }
@@ -603,8 +606,8 @@ function aggregateInOut(rows, groupBy = 'sku') {
     const name = useItem
       ? styleKey
       : ((r.sku_properties_name && String(r.sku_properties_name).trim()) || r.sku_outer_id || styleKey);
-    const qty = Number(r.stock_change) || 0;   // 带符号：入库+ 出库-
-    const docs = Number(r.receipts_count) || 0; // 单据数
+    const qty = toNum(r.stock_change);        // 带符号：入库+ 出库-
+    const docs = toNum(r.receipts_count);      // 单据数
     if (!months[month]) months[month] = { inStyles: new Set(), outStyles: new Set(), inQty: 0, outQty: 0, inDocs: 0, outDocs: 0 };
     if (!styleByMonth[month]) styleByMonth[month] = {};
     const m = months[month];
