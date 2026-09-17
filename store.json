@@ -8,6 +8,142 @@
   "itemFactors": {},
   "alerts": [
     {
+      "itemId": "525366187762176_667822830950912",
+      "title": "扁五折6骨配色柄-浅蓝",
+      "sku": "BWZPS-6K-QL",
+      "warehouse": "义乌大货仓",
+      "warnLine": 8600,
+      "type": "stock_change",
+      "from": 13400,
+      "to": 13100,
+      "time": 1789606891909
+    },
+    {
+      "itemId": "525366187762176_669744769360384",
+      "title": "扁五折6骨配色柄-藏青",
+      "sku": "BWZPS-6K-ZQ",
+      "warehouse": "义乌大货仓",
+      "warnLine": 900,
+      "type": "stock_change",
+      "from": 17800,
+      "to": 17500,
+      "time": 1789606891909
+    },
+    {
+      "itemId": "525366187762176_669744769370624",
+      "title": "扁五折6骨配色柄-黑色",
+      "sku": "BWZPS-6K-HS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 2300,
+      "type": "stock_change",
+      "from": 17700,
+      "to": 17400,
+      "time": 1789606891909
+    },
+    {
+      "itemId": "610827367635456_701798337995264",
+      "title": "685弯钩-混色",
+      "sku": "685WG-HUS",
+      "warehouse": "义乌大货仓",
+      "stock": 0,
+      "warnLine": 0,
+      "type": "recover",
+      "time": 1789603609019
+    },
+    {
+      "itemId": "721804990659072_721805125861888",
+      "title": "环扣圆五折-梧桐米",
+      "sku": "HKYWZ-WTM",
+      "warehouse": "义乌大货仓",
+      "stock": 0,
+      "warnLine": 0,
+      "type": "recover",
+      "time": 1789603609019
+    },
+    {
+      "itemId": "721804990659072_721805125825024",
+      "title": "环扣圆五折-混色",
+      "sku": "HKYWZ-HSS",
+      "warehouse": "义乌大货仓",
+      "stock": 0,
+      "warnLine": 0,
+      "type": "recover",
+      "time": 1789603609019
+    },
+    {
+      "itemId": "721804990659072_721805125884416",
+      "title": "环扣圆五折-酒红",
+      "sku": "HKYWZ-JH",
+      "warehouse": "义乌大货仓",
+      "stock": 0,
+      "warnLine": 0,
+      "type": "recover",
+      "time": 1789603609019
+    },
+    {
+      "itemId": "523258750476800_574558790660608",
+      "title": "自动布朗熊混色",
+      "sku": "BLX-ZD-HSS",
+      "warehouse": "义乌大货仓",
+      "stock": 0,
+      "warnLine": 0,
+      "type": "recover",
+      "time": 1789603609019
+    },
+    {
+      "itemId": "502400431905280_730648523028992",
+      "title": "遇水开花4节加粗-粉红",
+      "sku": "SYKH-4JJC-FH",
+      "warehouse": "义乌大货仓",
+      "stock": 1000,
+      "warnLine": 1300,
+      "type": "alert",
+      "time": 1789603609019
+    },
+    {
+      "itemId": "502398259862016_502398852532736",
+      "title": "手动加粗UV-白色",
+      "sku": "UV-SD-JC-BS",
+      "warehouse": "义乌大货仓",
+      "warnLine": 21600,
+      "type": "stock_change",
+      "from": 2300,
+      "to": 300,
+      "time": 1789603609019
+    },
+    {
+      "itemId": "523277613410816_524826525993472",
+      "title": "五折6骨-藏青",
+      "sku": "WZ-6SD-QZ-ZQ",
+      "warehouse": "义乌大货仓",
+      "stock": 3300,
+      "warnLine": 3800,
+      "type": "alert",
+      "time": 1789603609019
+    },
+    {
+      "itemId": "523277613410816_524826525993472",
+      "title": "五折6骨-藏青",
+      "sku": "WZ-6SD-QZ-ZQ",
+      "warehouse": "义乌大货仓",
+      "warnLine": 3800,
+      "type": "stock_change",
+      "from": 3900,
+      "to": 3300,
+      "time": 1789603609019
+    },
+    {
+      "itemId": "523277613410816_600744365974016",
+      "title": "五折6骨-酒红",
+      "sku": "WZ-6SD-QZ-JH",
+      "warehouse": "义乌大货仓",
+      "warnLine": 1300,
+      "type": "stock_change",
+      "from": 15450,
+      "to": 15250,
+      "time": 1789603609019
+    },
+    {
       "itemId": "525366187762176_525366485123584",
       "title": "扁五折6骨金柄-墨绿",
       "sku": "BWZ-6K-ML",
@@ -5344,154 +5480,11 @@
       "from": 20100,
       "to": 19800,
       "time": 1788919281220
-    },
-    {
-      "itemId": "502401421928960_523950731354624",
-      "title": "自动12骨小米双骨黑胶-黑色",
-      "sku": "SW-12ZDSG-HS",
-      "warehouse": "义乌大货仓",
-      "warnLine": 160440,
-      "type": "stock_change",
-      "from": 63206,
-      "to": 62006,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "502398259862016_502399133848064",
-      "title": "自动UV-黑色",
-      "sku": "UV-ZD-HS",
-      "warehouse": "义乌大货仓",
-      "warnLine": 91800,
-      "type": "stock_change",
-      "from": 131980,
-      "to": 131530,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "523277613410816_575452008376832",
-      "title": "五折6骨-天空蓝b",
-      "sku": "WZ-6SD-BZ-TKL",
-      "warehouse": "义乌大货仓",
-      "warnLine": 6300,
-      "type": "stock_change",
-      "from": 54800,
-      "to": 54500,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "523277613410816_607662781297152",
-      "title": "五折6骨-抹茶绿b",
-      "sku": "WZ-6SD-BZ-MCL",
-      "warehouse": "义乌大货仓",
-      "warnLine": 1800,
-      "type": "stock_change",
-      "from": 500,
-      "to": 300,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "523277613410816_575452008382976",
-      "title": "五折6骨-月光白b",
-      "sku": "WZ-6SD-BZ-YGB",
-      "warehouse": "义乌大货仓",
-      "warnLine": 4100,
-      "type": "stock_change",
-      "from": 12400,
-      "to": 12300,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "523277613410816_575452008391168",
-      "title": "五折6骨-樱花粉b",
-      "sku": "WZ-6SD-BZ-YHF",
-      "warehouse": "义乌大货仓",
-      "warnLine": 10200,
-      "type": "stock_change",
-      "from": 49300,
-      "to": 49000,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "523277613410816_575452008393216",
-      "title": "五折6骨-熏衣紫b",
-      "sku": "WZ-6SD-BZ-XYZ",
-      "warehouse": "义乌大货仓",
-      "warnLine": 7900,
-      "type": "stock_change",
-      "from": 62600,
-      "to": 62500,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "523277613410816_575452008397312",
-      "title": "五折6骨-藏青b",
-      "sku": "WZ-6SD-BZ-ZQ",
-      "warehouse": "义乌大货仓",
-      "warnLine": 6300,
-      "type": "stock_change",
-      "from": 18200,
-      "to": 18100,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "523277613410816_575452808307200",
-      "title": "五折6骨-酒红b",
-      "sku": "WZ-6SD-BZ-JH",
-      "warehouse": "义乌大货仓",
-      "warnLine": 600,
-      "type": "stock_change",
-      "from": -100,
-      "to": 0,
-      "time": 1788919281220
-    },
-    {
-      "itemId": "525351226632704_525754475399680",
-      "title": "12骨手动75黑胶-藏青",
-      "sku": "SW-SD-12K75-ZQ",
-      "warehouse": "义乌大货仓",
-      "warnLine": 2400,
-      "type": "stock_change",
-      "from": 7680,
-      "to": 5280,
-      "time": 1788912910533
-    },
-    {
-      "itemId": "525366187762176_525366485137920",
-      "title": "扁五折6骨金柄-粉红",
-      "sku": "BWZ-6K-FH",
-      "warehouse": "义乌大货仓",
-      "warnLine": 6700,
-      "type": "stock_change",
-      "from": 21600,
-      "to": 20100,
-      "time": 1788857204593
-    },
-    {
-      "itemId": "502398259862016_502398852522496",
-      "title": "手动加粗UV-藏青",
-      "sku": "UV-SD-JC-ZQ",
-      "warehouse": "义乌大货仓",
-      "warnLine": 59500,
-      "type": "stock_change",
-      "from": 6200,
-      "to": 3200,
-      "time": 1788857204593
-    },
-    {
-      "itemId": "502398259862016_525889733657088",
-      "title": "手动加粗UV-酒红",
-      "sku": "UV-SD-JC-JH",
-      "warehouse": "义乌大货仓",
-      "warnLine": 15500,
-      "type": "stock_change",
-      "from": 200,
-      "to": 0,
-      "time": 1788857204593
     }
   ],
   "source": "erp",
   "lastError": "",
-  "lastCheck": 1789546969681,
+  "lastCheck": 1789606891909,
   "belowState": {
     "414951770450432_414951770456577": false,
     "414951770450432_414951770456578": false,
@@ -5588,7 +5581,7 @@
     "526436857686528_665342343369216": false,
     "526436857686528_669560767486464": false,
     "610827367635456_610827467547136": true,
-    "610827367635456_701798337995264": true,
+    "610827367635456_701798337995264": false,
     "610827367635456_610827467534848": true,
     "610827367635456_610827467512320": false,
     "610827367635456_629266444089856": false,
@@ -5746,12 +5739,12 @@
     "592107383853568_740382643622400": false,
     "592107383853568_740382643329536": false,
     "592107383853568_740382643630592": false,
-    "721804990659072_721805125861888": true,
-    "721804990659072_721805125825024": true,
+    "721804990659072_721805125861888": false,
+    "721804990659072_721805125825024": false,
     "721804990659072_721805125872128": false,
     "721804990659072_732564417849856": false,
     "721804990659072_721805125868032": false,
-    "721804990659072_721805125884416": true,
+    "721804990659072_721805125884416": false,
     "721804990659072_721805125855744": false,
     "523258750476800_654020185987584": false,
     "523258750476800_534059852859904": false,
@@ -5777,7 +5770,7 @@
     "523258750476800_650481838111232": false,
     "523258750476800_626057117344256": false,
     "523258750476800_574558790666752": false,
-    "523258750476800_574558790660608": true,
+    "523258750476800_574558790660608": false,
     "523258750476800_532302329051648": false,
     "523258750476800_523258912612864": false,
     "591764233923072_591764292499968": false,
@@ -6079,7 +6072,7 @@
     "502400431905280_730648523041280": false,
     "502400431905280_735403059266048": false,
     "502400431905280_730648523033088": false,
-    "502400431905280_730648523028992": false,
+    "502400431905280_730648523028992": true,
     "502400431905280_730648522996224": false,
     "502400431905280_730648523022848": false,
     "502398259862016_552984115290624": true,
@@ -6175,7 +6168,7 @@
     "523277613410816_687464055652864": false,
     "523277613410816_523277964808704": false,
     "523277613410816_575452008393216": false,
-    "523277613410816_524826525993472": false,
+    "523277613410816_524826525993472": true,
     "523277613410816_575452008397312": false,
     "523277613410816_600744365974016": false,
     "523277613410816_575452808307200": true,
@@ -7781,11 +7774,11 @@
       "active": true,
       "stock": 0,
       "price": 10,
-      "sales30": 2640,
+      "sales30": 600,
       "availableNum": 0,
       "purchaseNum": 488,
       "factor": 1,
-      "warnLine": 2640,
+      "warnLine": 600,
       "below": true
     },
     {
@@ -7797,12 +7790,12 @@
       "active": true,
       "stock": 0,
       "price": 10,
-      "sales30": 1120,
+      "sales30": 0,
       "availableNum": 0,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 1120,
-      "below": true
+      "warnLine": 0,
+      "below": false
     },
     {
       "id": "610827367635456_610827467534848",
@@ -7813,11 +7806,11 @@
       "active": true,
       "stock": 240,
       "price": 10,
-      "sales30": 3400,
+      "sales30": 400,
       "availableNum": 240,
       "purchaseNum": 4184,
       "factor": 1,
-      "warnLine": 3400,
+      "warnLine": 400,
       "below": true
     },
     {
@@ -7829,11 +7822,11 @@
       "active": true,
       "stock": 20480,
       "price": 10,
-      "sales30": 9840,
+      "sales30": 8200,
       "availableNum": 20480,
       "purchaseNum": 28168,
       "factor": 1,
-      "warnLine": 9840,
+      "warnLine": 8200,
       "below": false
     },
     {
@@ -8533,11 +8526,11 @@
       "active": true,
       "stock": 23200,
       "price": 7,
-      "sales30": 4000,
+      "sales30": 2900,
       "availableNum": 23200,
       "purchaseNum": 300,
       "factor": 1,
-      "warnLine": 4000,
+      "warnLine": 2900,
       "below": false
     },
     {
@@ -8549,11 +8542,11 @@
       "active": true,
       "stock": 0,
       "price": 7,
-      "sales30": 6700,
+      "sales30": 5500,
       "availableNum": 0,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 6700,
+      "warnLine": 5500,
       "below": true
     },
     {
@@ -8579,13 +8572,13 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 13400,
+      "stock": 13100,
       "price": 7,
-      "sales30": 9800,
-      "availableNum": 13400,
+      "sales30": 8600,
+      "availableNum": 13100,
       "purchaseNum": 100,
       "factor": 1,
-      "warnLine": 9800,
+      "warnLine": 8600,
       "below": false
     },
     {
@@ -8643,13 +8636,13 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 17800,
+      "stock": 17500,
       "price": 6.8,
-      "sales30": 2000,
-      "availableNum": 17800,
+      "sales30": 900,
+      "availableNum": 17500,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 2000,
+      "warnLine": 900,
       "below": false
     },
     {
@@ -8661,11 +8654,11 @@
       "active": true,
       "stock": 200,
       "price": 6.8,
-      "sales30": 2300,
+      "sales30": 2200,
       "availableNum": 200,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 2300,
+      "warnLine": 2200,
       "below": true
     },
     {
@@ -8691,13 +8684,13 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 17700,
+      "stock": 17400,
       "price": 6.8,
-      "sales30": 3400,
-      "availableNum": 17700,
+      "sales30": 2300,
+      "availableNum": 17400,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 3400,
+      "warnLine": 2300,
       "below": false
     },
     {
@@ -8741,11 +8734,11 @@
       "active": true,
       "stock": 11400,
       "price": 6.8,
-      "sales30": 9200,
+      "sales30": 10300,
       "availableNum": 11400,
       "purchaseNum": 29904,
       "factor": 1,
-      "warnLine": 9200,
+      "warnLine": 10300,
       "below": false
     },
     {
@@ -8757,11 +8750,11 @@
       "active": true,
       "stock": 11700,
       "price": 7,
-      "sales30": 4400,
+      "sales30": 4600,
       "availableNum": 11700,
       "purchaseNum": 21844,
       "factor": 1,
-      "warnLine": 4400,
+      "warnLine": 4600,
       "below": false
     },
     {
@@ -8789,11 +8782,11 @@
       "active": true,
       "stock": 62000,
       "price": 7,
-      "sales30": 15000,
+      "sales30": 14900,
       "availableNum": 62000,
       "purchaseNum": 21300,
       "factor": 1,
-      "warnLine": 15000,
+      "warnLine": 14900,
       "below": false
     },
     {
@@ -8805,11 +8798,11 @@
       "active": true,
       "stock": 4500,
       "price": 7,
-      "sales30": 19000,
+      "sales30": 20200,
       "availableNum": 4500,
       "purchaseNum": 95673,
       "factor": 1,
-      "warnLine": 19000,
+      "warnLine": 20200,
       "below": true
     },
     {
@@ -8821,11 +8814,11 @@
       "active": true,
       "stock": 6300,
       "price": 7,
-      "sales30": 17600,
+      "sales30": 18700,
       "availableNum": 6300,
       "purchaseNum": 47932,
       "factor": 1,
-      "warnLine": 17600,
+      "warnLine": 18700,
       "below": true
     },
     {
@@ -8917,11 +8910,11 @@
       "active": true,
       "stock": 14200,
       "price": 7,
-      "sales30": 11900,
+      "sales30": 13300,
       "availableNum": 14200,
       "purchaseNum": 46508,
       "factor": 1,
-      "warnLine": 11900,
+      "warnLine": 13300,
       "below": false
     },
     {
@@ -9013,11 +9006,11 @@
       "active": true,
       "stock": 68900,
       "price": 6.8,
-      "sales30": 11400,
+      "sales30": 11900,
       "availableNum": 68900,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 11400,
+      "warnLine": 11900,
       "below": false
     },
     {
@@ -9029,11 +9022,11 @@
       "active": true,
       "stock": 800,
       "price": 6.8,
-      "sales30": 5800,
+      "sales30": 6300,
       "availableNum": 800,
       "purchaseNum": 20000,
       "factor": 1,
-      "warnLine": 5800,
+      "warnLine": 6300,
       "below": true
     },
     {
@@ -9077,11 +9070,11 @@
       "active": true,
       "stock": 100,
       "price": 6.8,
-      "sales30": 21100,
+      "sales30": 21400,
       "availableNum": 100,
       "purchaseNum": 28200,
       "factor": 1,
-      "warnLine": 21100,
+      "warnLine": 21400,
       "below": true
     },
     {
@@ -10229,11 +10222,11 @@
       "active": true,
       "stock": 3360,
       "price": 8.3,
-      "sales30": 540,
+      "sales30": 840,
       "availableNum": 3360,
       "purchaseNum": 18900,
       "factor": 1,
-      "warnLine": 540,
+      "warnLine": 840,
       "below": false
     },
     {
@@ -10277,11 +10270,11 @@
       "active": true,
       "stock": 3360,
       "price": 8,
-      "sales30": 180,
+      "sales30": 480,
       "availableNum": 3360,
       "purchaseNum": 15360,
       "factor": 1,
-      "warnLine": 180,
+      "warnLine": 480,
       "below": false
     },
     {
@@ -10309,11 +10302,11 @@
       "active": true,
       "stock": 12420,
       "price": 8,
-      "sales30": 60,
+      "sales30": 360,
       "availableNum": 12420,
       "purchaseNum": 37620,
       "factor": 1,
-      "warnLine": 60,
+      "warnLine": 360,
       "below": false
     },
     {
@@ -10325,12 +10318,12 @@
       "active": true,
       "stock": 0,
       "price": 0,
-      "sales30": 1100,
+      "sales30": 0,
       "availableNum": 0,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 1100,
-      "below": true
+      "warnLine": 0,
+      "below": false
     },
     {
       "id": "721804990659072_721805125825024",
@@ -10341,12 +10334,12 @@
       "active": true,
       "stock": 0,
       "price": 0,
-      "sales30": 220,
+      "sales30": 0,
       "availableNum": 0,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 220,
-      "below": true
+      "warnLine": 0,
+      "below": false
     },
     {
       "id": "721804990659072_721805125872128",
@@ -10357,11 +10350,11 @@
       "active": true,
       "stock": 9300,
       "price": 0,
-      "sales30": 300,
+      "sales30": 0,
       "availableNum": 9300,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 300,
+      "warnLine": 0,
       "below": false
     },
     {
@@ -10389,11 +10382,11 @@
       "active": true,
       "stock": 12200,
       "price": 0,
-      "sales30": 600,
+      "sales30": 0,
       "availableNum": 12200,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 600,
+      "warnLine": 0,
       "below": false
     },
     {
@@ -10405,12 +10398,12 @@
       "active": true,
       "stock": 0,
       "price": 0,
-      "sales30": 100,
+      "sales30": 0,
       "availableNum": 0,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 100,
-      "below": true
+      "warnLine": 0,
+      "below": false
     },
     {
       "id": "721804990659072_721805125855744",
@@ -10421,11 +10414,11 @@
       "active": true,
       "stock": 15900,
       "price": 0,
-      "sales30": 5800,
+      "sales30": 0,
       "availableNum": 15900,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 5800,
+      "warnLine": 0,
       "below": false
     },
     {
@@ -10821,12 +10814,12 @@
       "active": true,
       "stock": 0,
       "price": 7.9,
-      "sales30": 25200,
+      "sales30": 0,
       "availableNum": 0,
       "purchaseNum": 480,
       "factor": 1,
-      "warnLine": 25200,
-      "below": true
+      "warnLine": 0,
+      "below": false
     },
     {
       "id": "523258750476800_532302329051648",
@@ -11669,11 +11662,11 @@
       "active": true,
       "stock": 39240,
       "price": 10.6,
-      "sales30": 1980,
+      "sales30": 1680,
       "availableNum": 39240,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 1980,
+      "warnLine": 1680,
       "below": false
     },
     {
@@ -11701,11 +11694,11 @@
       "active": true,
       "stock": 82080,
       "price": 10.6,
-      "sales30": 8580,
+      "sales30": 6060,
       "availableNum": 82080,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 8580,
+      "warnLine": 6060,
       "below": false
     },
     {
@@ -14213,11 +14206,11 @@
       "active": true,
       "stock": 0,
       "price": 7.35,
-      "sales30": 2850,
+      "sales30": 3090,
       "availableNum": 0,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 2850,
+      "warnLine": 3090,
       "below": true
     },
     {
@@ -14709,11 +14702,11 @@
       "active": true,
       "stock": 2100,
       "price": 10.4,
-      "sales30": 10320,
+      "sales30": 10440,
       "availableNum": 2100,
       "purchaseNum": 54160,
       "factor": 1,
-      "warnLine": 10320,
+      "warnLine": 10440,
       "below": true
     },
     {
@@ -14741,11 +14734,11 @@
       "active": true,
       "stock": 4860,
       "price": 10.4,
-      "sales30": 45180,
+      "sales30": 43200,
       "availableNum": 4860,
       "purchaseNum": 68453,
       "factor": 1,
-      "warnLine": 45180,
+      "warnLine": 43200,
       "below": true
     },
     {
@@ -14757,11 +14750,11 @@
       "active": true,
       "stock": 17340,
       "price": 10.4,
-      "sales30": 22860,
+      "sales30": 22620,
       "availableNum": 17340,
       "purchaseNum": 80568,
       "factor": 1,
-      "warnLine": 22860,
+      "warnLine": 22620,
       "below": true
     },
     {
@@ -14773,11 +14766,11 @@
       "active": true,
       "stock": 8844,
       "price": 10.4,
-      "sales30": 23700,
+      "sales30": 21300,
       "availableNum": 8844,
       "purchaseNum": 85390,
       "factor": 1,
-      "warnLine": 23700,
+      "warnLine": 21300,
       "below": true
     },
     {
@@ -14805,11 +14798,11 @@
       "active": true,
       "stock": 8640,
       "price": 10.2,
-      "sales30": 54360,
+      "sales30": 54540,
       "availableNum": 8640,
       "purchaseNum": 75540,
       "factor": 1,
-      "warnLine": 54360,
+      "warnLine": 54540,
       "below": true
     },
     {
@@ -14837,11 +14830,11 @@
       "active": true,
       "stock": 16500,
       "price": 10.2,
-      "sales30": 0,
+      "sales30": 2160,
       "availableNum": 16500,
       "purchaseNum": 109830,
       "factor": 1,
-      "warnLine": 0,
+      "warnLine": 2160,
       "below": false
     },
     {
@@ -14869,11 +14862,11 @@
       "active": true,
       "stock": 32846,
       "price": 10.2,
-      "sales30": 164760,
+      "sales30": 159960,
       "availableNum": 32846,
       "purchaseNum": 180004,
       "factor": 1,
-      "warnLine": 164760,
+      "warnLine": 159960,
       "below": true
     },
     {
@@ -15093,11 +15086,11 @@
       "active": true,
       "stock": 26460,
       "price": 8.2,
-      "sales30": 9000,
+      "sales30": 8100,
       "availableNum": 26460,
       "purchaseNum": 8040,
       "factor": 1,
-      "warnLine": 9000,
+      "warnLine": 8100,
       "below": false
     },
     {
@@ -15141,11 +15134,11 @@
       "active": true,
       "stock": 1080,
       "price": 7.9,
-      "sales30": 1350,
+      "sales30": 2250,
       "availableNum": 1080,
       "purchaseNum": 8010,
       "factor": 1,
-      "warnLine": 1350,
+      "warnLine": 2250,
       "below": true
     },
     {
@@ -15637,11 +15630,11 @@
       "active": true,
       "stock": 12200,
       "price": 5.7,
-      "sales30": 500,
+      "sales30": 700,
       "availableNum": 12200,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 500,
+      "warnLine": 700,
       "below": false
     },
     {
@@ -15653,12 +15646,12 @@
       "active": true,
       "stock": 1000,
       "price": 5.7,
-      "sales30": 900,
+      "sales30": 1300,
       "availableNum": 1000,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 900,
-      "below": false
+      "warnLine": 1300,
+      "below": true
     },
     {
       "id": "502400431905280_730648522996224",
@@ -15685,11 +15678,11 @@
       "active": true,
       "stock": 6500,
       "price": 5.7,
-      "sales30": 800,
+      "sales30": 1100,
       "availableNum": 6500,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 800,
+      "warnLine": 1100,
       "below": false
     },
     {
@@ -15701,11 +15694,11 @@
       "active": true,
       "stock": 0,
       "price": 4.95,
-      "sales30": 61900,
+      "sales30": 63200,
       "availableNum": 0,
       "purchaseNum": 8440,
       "factor": 1,
-      "warnLine": 61900,
+      "warnLine": 63200,
       "below": true
     },
     {
@@ -15749,11 +15742,11 @@
       "active": true,
       "stock": 0,
       "price": 5.1,
-      "sales30": 18100,
+      "sales30": 23800,
       "availableNum": 0,
       "purchaseNum": 1030,
       "factor": 1,
-      "warnLine": 18100,
+      "warnLine": 23800,
       "below": true
     },
     {
@@ -15781,11 +15774,11 @@
       "active": true,
       "stock": 0,
       "price": 4.95,
-      "sales30": 35400,
+      "sales30": 36700,
       "availableNum": 0,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 35400,
+      "warnLine": 36700,
       "below": true
     },
     {
@@ -15797,11 +15790,11 @@
       "active": true,
       "stock": 0,
       "price": 4.95,
-      "sales30": 7200,
+      "sales30": 14300,
       "availableNum": 0,
       "purchaseNum": 6630,
       "factor": 1,
-      "warnLine": 7200,
+      "warnLine": 14300,
       "below": true
     },
     {
@@ -15813,11 +15806,11 @@
       "active": true,
       "stock": 0,
       "price": 4.95,
-      "sales30": 191200,
+      "sales30": 183900,
       "availableNum": 0,
       "purchaseNum": 34460,
       "factor": 1,
-      "warnLine": 191200,
+      "warnLine": 183900,
       "below": true
     },
     {
@@ -15845,11 +15838,11 @@
       "active": true,
       "stock": 47500,
       "price": 5.25,
-      "sales30": 16600,
+      "sales30": 15500,
       "availableNum": 47500,
       "purchaseNum": 100,
       "factor": 1,
-      "warnLine": 16600,
+      "warnLine": 15500,
       "below": false
     },
     {
@@ -15861,11 +15854,11 @@
       "active": true,
       "stock": 100,
       "price": 5.25,
-      "sales30": 28300,
+      "sales30": 27600,
       "availableNum": 100,
       "purchaseNum": 13510,
       "factor": 1,
-      "warnLine": 28300,
+      "warnLine": 27600,
       "below": true
     },
     {
@@ -15875,13 +15868,13 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 2300,
+      "stock": 300,
       "price": 5.25,
-      "sales30": 19600,
-      "availableNum": 2300,
+      "sales30": 21600,
+      "availableNum": 300,
       "purchaseNum": 230,
       "factor": 1,
-      "warnLine": 19600,
+      "warnLine": 21600,
       "below": true
     },
     {
@@ -15925,11 +15918,11 @@
       "active": true,
       "stock": 47200,
       "price": 5.1,
-      "sales30": 111500,
+      "sales30": 112700,
       "availableNum": 47200,
       "purchaseNum": 179430,
       "factor": 1,
-      "warnLine": 111500,
+      "warnLine": 112700,
       "below": true
     },
     {
@@ -16069,11 +16062,11 @@
       "active": true,
       "stock": 75610,
       "price": 7.2,
-      "sales30": 21060,
+      "sales30": 20250,
       "availableNum": 75610,
       "purchaseNum": 54264,
       "factor": 1,
-      "warnLine": 21060,
+      "warnLine": 20250,
       "below": false
     },
     {
@@ -16085,11 +16078,11 @@
       "active": true,
       "stock": 27730,
       "price": 7.35,
-      "sales30": 17190,
+      "sales30": 16830,
       "availableNum": 27730,
       "purchaseNum": 34286,
       "factor": 1,
-      "warnLine": 17190,
+      "warnLine": 16830,
       "below": false
     },
     {
@@ -16101,11 +16094,11 @@
       "active": true,
       "stock": 36750,
       "price": 7.35,
-      "sales30": 14640,
+      "sales30": 15270,
       "availableNum": 36750,
       "purchaseNum": 2556,
       "factor": 1,
-      "warnLine": 14640,
+      "warnLine": 15270,
       "below": false
     },
     {
@@ -16117,11 +16110,11 @@
       "active": true,
       "stock": 1540,
       "price": 7.35,
-      "sales30": 29010,
+      "sales30": 29100,
       "availableNum": 1540,
       "purchaseNum": 50574,
       "factor": 1,
-      "warnLine": 29010,
+      "warnLine": 29100,
       "below": true
     },
     {
@@ -16149,11 +16142,11 @@
       "active": true,
       "stock": 12240,
       "price": 7.2,
-      "sales30": 24030,
+      "sales30": 23220,
       "availableNum": 12240,
       "purchaseNum": 126432,
       "factor": 1,
-      "warnLine": 24030,
+      "warnLine": 23220,
       "below": true
     },
     {
@@ -16197,11 +16190,11 @@
       "active": true,
       "stock": 135670,
       "price": 7.2,
-      "sales30": 60300,
+      "sales30": 57780,
       "availableNum": 135670,
       "purchaseNum": 157694,
       "factor": 1,
-      "warnLine": 60300,
+      "warnLine": 57780,
       "below": false
     },
     {
@@ -16885,11 +16878,11 @@
       "active": true,
       "stock": 16300,
       "price": 6.5,
-      "sales30": 6400,
+      "sales30": 5900,
       "availableNum": 16300,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 6400,
+      "warnLine": 5900,
       "below": false
     },
     {
@@ -16901,11 +16894,11 @@
       "active": true,
       "stock": 1400,
       "price": 7.7,
-      "sales30": 700,
+      "sales30": 500,
       "availableNum": 1400,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 700,
+      "warnLine": 500,
       "below": false
     },
     {
@@ -16917,11 +16910,11 @@
       "active": true,
       "stock": 54000,
       "price": 6.7,
-      "sales30": 6700,
+      "sales30": 6600,
       "availableNum": 54000,
       "purchaseNum": 18000,
       "factor": 1,
-      "warnLine": 6700,
+      "warnLine": 6600,
       "below": false
     },
     {
@@ -16949,11 +16942,11 @@
       "active": true,
       "stock": 100,
       "price": 6.7,
-      "sales30": 2000,
+      "sales30": 700,
       "availableNum": 100,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 2000,
+      "warnLine": 700,
       "below": true
     },
     {
@@ -16981,11 +16974,11 @@
       "active": true,
       "stock": 3100,
       "price": 7.2,
-      "sales30": 1700,
+      "sales30": 1500,
       "availableNum": 3100,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 1700,
+      "warnLine": 1500,
       "below": false
     },
     {
@@ -16997,11 +16990,11 @@
       "active": true,
       "stock": 120700,
       "price": 6.5,
-      "sales30": 8500,
+      "sales30": 8700,
       "availableNum": 120700,
       "purchaseNum": 5575,
       "factor": 1,
-      "warnLine": 8500,
+      "warnLine": 8700,
       "below": false
     },
     {
@@ -17029,11 +17022,11 @@
       "active": true,
       "stock": 11200,
       "price": 6.7,
-      "sales30": 3600,
+      "sales30": 3500,
       "availableNum": 11200,
       "purchaseNum": 1700,
       "factor": 1,
-      "warnLine": 3600,
+      "warnLine": 3500,
       "below": false
     },
     {
@@ -17061,11 +17054,11 @@
       "active": true,
       "stock": 5800,
       "price": 6.7,
-      "sales30": 16500,
+      "sales30": 17700,
       "availableNum": 5800,
       "purchaseNum": 17600,
       "factor": 1,
-      "warnLine": 16500,
+      "warnLine": 17700,
       "below": true
     },
     {
@@ -17093,11 +17086,11 @@
       "active": true,
       "stock": 47800,
       "price": 6.7,
-      "sales30": 10400,
+      "sales30": 10500,
       "availableNum": 47800,
       "purchaseNum": 3900,
       "factor": 1,
-      "warnLine": 10400,
+      "warnLine": 10500,
       "below": false
     },
     {
@@ -17173,11 +17166,11 @@
       "active": true,
       "stock": 61600,
       "price": 6.7,
-      "sales30": 8400,
+      "sales30": 8600,
       "availableNum": 61600,
       "purchaseNum": 1730,
       "factor": 1,
-      "warnLine": 8400,
+      "warnLine": 8600,
       "below": false
     },
     {
@@ -17187,14 +17180,14 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 3900,
+      "stock": 3300,
       "price": 7.2,
-      "sales30": 3400,
-      "availableNum": 3900,
+      "sales30": 3800,
+      "availableNum": 3300,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 3400,
-      "below": false
+      "warnLine": 3800,
+      "below": true
     },
     {
       "id": "523277613410816_575452008397312",
@@ -17205,11 +17198,11 @@
       "active": true,
       "stock": 15600,
       "price": 6.5,
-      "sales30": 6400,
+      "sales30": 6600,
       "availableNum": 15600,
       "purchaseNum": 11005,
       "factor": 1,
-      "warnLine": 6400,
+      "warnLine": 6600,
       "below": false
     },
     {
@@ -17219,13 +17212,13 @@
       "category": "南阳1688仓库",
       "warehouse": "义乌大货仓",
       "active": true,
-      "stock": 15450,
+      "stock": 15250,
       "price": 7.2,
-      "sales30": 1100,
-      "availableNum": 15450,
+      "sales30": 1300,
+      "availableNum": 15250,
       "purchaseNum": 0,
       "factor": 1,
-      "warnLine": 1100,
+      "warnLine": 1300,
       "below": false
     },
     {
@@ -18565,11 +18558,11 @@
       "active": true,
       "stock": 84400,
       "price": 7.5,
-      "sales30": 10640,
+      "sales30": 10550,
       "availableNum": 84400,
       "purchaseNum": 4190,
       "factor": 1,
-      "warnLine": 10640,
+      "warnLine": 10550,
       "below": false
     },
     {
@@ -18597,11 +18590,11 @@
       "active": true,
       "stock": 27340,
       "price": 7.5,
-      "sales30": 8030,
+      "sales30": 7670,
       "availableNum": 27340,
       "purchaseNum": 870,
       "factor": 1,
-      "warnLine": 8030,
+      "warnLine": 7670,
       "below": false
     },
     {
@@ -18613,11 +18606,11 @@
       "active": true,
       "stock": 87010,
       "price": 7.5,
-      "sales30": 13790,
+      "sales30": 13970,
       "availableNum": 87010,
       "purchaseNum": 340,
       "factor": 1,
-      "warnLine": 13790,
+      "warnLine": 13970,
       "below": false
     },
     {
@@ -18629,11 +18622,11 @@
       "active": true,
       "stock": 106560,
       "price": 7.2,
-      "sales30": 30710,
+      "sales30": 33680,
       "availableNum": 106560,
       "purchaseNum": 20980,
       "factor": 1,
-      "warnLine": 30710,
+      "warnLine": 33680,
       "below": false
     }
   ],

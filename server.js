@@ -38,7 +38,7 @@ const SHARE_CFG = (() => {
 const SHARE_PASSWORD = process.env.SHARE_PASSWORD || SHARE_CFG.password || '';
 // 快照模式：目录中没有 .env（缺 ERP_API_URL / ERP_COOKIE）时，
 // 仅展示 store.json 里的库存快照，不启动调度器、不拉取 ERP、不允许改设置。
-const SNAPSHOT_MODE = !(process.env.ERP_API_URL && process.env.ERP_COOKIE);
+const SNAPSHOT_MODE = !(process.env.ERP_API_URL && (process.env.ERP_COOKIE || (process.env.ERP_USERNAME && process.env.ERP_PASSWORD)));
 // 分享版附加限制（share.config.json 中配置，仅影响带口令的分享部署；本地无 share.config.json 时均不生效）：
 //   noCheckNow: true      → 禁用「立即检查」（调度器仍按设置频率自动刷新，数据保持最新）
 //   noSettingsWrite: true → 禁用「保存设置」（设置页仅可查看）
@@ -148,6 +148,127 @@ function extractArray(json) {
   return null;
 }
 
+/* ==================== 快麦自动登录（Cookie 自动续期） ==================== */
+// .env 配置 ERP_COMPANY / ERP_USERNAME / ERP_PASSWORD 后：
+//   Cookie 过期（suc=false / result=901）时自动用账号登录换新 Cookie，无需手动更新。
+// 密码加密方式与官网登录页一致：MD5(明文).toUpperCase()（见 /resources/js/login.js encodePwd）。
+const ERP_ORIGIN = (() => { try { return new URL(process.env.ERP_API_URL || '').origin; } catch (e) { return ''; } })();
+const ERP_LOGIN_COMPANY = (process.env.ERP_COMPANY || '').trim();
+const ERP_LOGIN_USER = (process.env.ERP_USERNAME || '').trim();
+const ERP_LOGIN_PASSWORD = (process.env.ERP_PASSWORD || '').trim();
+const COOKIE_CACHE_PATH = path.join(__dirname, 'erp-cookie.json'); // 登录成功后缓存最新 Cookie，重启免重登
+
+// 运行时 Cookie：优先自动登录缓存（每次登录成功都会覆写，永远最新），其次 .env
+let erpCookie = '';
+try { erpCookie = JSON.parse(fs.readFileSync(COOKIE_CACHE_PATH, 'utf8')).cookie || ''; } catch (e) { /* 无缓存 */ }
+if (!erpCookie) erpCookie = process.env.ERP_COOKIE || '';
+let erpLoginPromise = null; // 防并发重复登录
+
+const md5Upper = (s) => crypto.createHash('md5').update(s, 'utf8').digest('hex').toUpperCase();
+const canAutoLogin = () => !!(ERP_ORIGIN && ERP_LOGIN_COMPANY && ERP_LOGIN_USER && ERP_LOGIN_PASSWORD);
+// 识别「登录态失效」类错误（可自动重登恢复）
+function isErpAuthError(e) {
+  return /suc=false|result.{0,3}901|会话异常|登录态|Cookie 已过期|重新抓取/i.test(e && e.message || '');
+}
+
+// 从响应头收集 Set-Cookie 并合并进现有 Cookie（新值覆盖同名，其余保留）
+function mergeSetCookies(current, res) {
+  const jar = new Map();
+  for (const pair of String(current || '').split(';').map(s => s.trim()).filter(Boolean)) {
+    const i = pair.indexOf('=');
+    if (i > 0) jar.set(pair.slice(0, i), pair.slice(i + 1));
+  }
+  const setCookies = (res.headers.getSetCookie ? res.headers.getSetCookie() : [res.headers.get('set-cookie')]).filter(Boolean);
+  for (const sc of setCookies) {
+    const kv = String(sc).split(';')[0];
+    const i = kv.indexOf('=');
+    if (i > 0) jar.set(kv.slice(0, i).trim(), kv.slice(i + 1));
+  }
+  return [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
+}
+
+// 短信验证上下文：风控要求短信验证（login_verify_random）时暂存，供看板引导用户完成验证
+let erpVerifyPending = null; // { accountId, companyId, ts } | null
+const erpVerifyState = () => ({
+  pending: !!erpVerifyPending,
+  canAutoLogin: canAutoLogin(),
+  ts: erpVerifyPending && erpVerifyPending.ts
+});
+
+async function erpLogin(smsCode = '') {
+  if (!canAutoLogin()) throw new Error('未配置自动登录（需要 ERP_COMPANY / ERP_USERNAME / ERP_PASSWORD）');
+  if (erpLoginPromise) return erpLoginPromise; // 已有登录在进行，复用
+  erpLoginPromise = (async () => {
+    console.log(`[ERP自动登录] 使用账号 ${ERP_LOGIN_USER} 登录 ${ERP_ORIGIN} ...${smsCode ? '（附带短信验证码）' : ''}`);
+    const res = await fetch(ERP_ORIGIN + '/account/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mozilla/5.0',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Referer': ERP_ORIGIN + '/login.html'
+      },
+      body: new URLSearchParams({
+        companyName: ERP_LOGIN_COMPANY,
+        userName: ERP_LOGIN_USER,
+        password: md5Upper(ERP_LOGIN_PASSWORD),
+        salt: String(Date.now()),
+        validationCode: '', phoneVerifyCode: smsCode || '', deviceId: '', unionId: '', scanSource: ''
+      }).toString(),
+      signal: AbortSignal.timeout(15000)
+    });
+    let cookie = mergeSetCookies(erpCookie, res);
+    const json = await res.json().catch(() => ({}));
+
+    // result=30：颁发临时 token，需跳转 domain/account/login/token 换正式会话 Cookie
+    if (json.result === 30 && json.data && json.data.token && json.data.domain) {
+      const host = String(json.data.domain).replace(/^https?:\/\//, '');
+      let url = `https://${host}/account/login/token?token=${encodeURIComponent(json.data.token)}&domain=${host}`;
+      for (let hop = 0; hop < 3 && url; hop++) {
+        const r2 = await fetch(url, { redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
+        cookie = mergeSetCookies(cookie, r2);
+        const loc = r2.headers.get('location');
+        url = loc && loc.startsWith('http') ? loc : null;
+      }
+    }
+
+    if (json.result === 1) {
+      const d = json.data || {};
+      // 实测：密码错误也返回 result:1，需看 data.status==='fail'（data.result 为字符串 '20' 时表示要图形验证码）
+      if (d.status === 'fail') throw new Error(`快麦自动登录失败：${d.msg || json.message || '用户名或密码错误'}`);
+      if (String(d.result) === '20') throw new Error('快麦登录触发图形验证码（登录过于频繁），请到官网手动登录一次后再试');
+      if (d.status === 'login_verify_random' || d.status === 'login_verify_risk') {
+        // 风控要求短信验证：暂存 accountId/companyId，看板会提示用户收码+填码
+        erpVerifyPending = { accountId: d.accountId, companyId: d.companyId, ts: Date.now() };
+        throw new Error('快麦登录要求短信验证（风控）：已准备好，请到看板按提示输入手机验证码完成登录');
+      }
+      if (json.result === 1 && cookie && !/3AB9D23F7A4B3C9B|_censeid|SESSION/i.test(cookie)) {
+        console.warn('[ERP自动登录] 登录返回成功但未见会话 Cookie，可能仍需手动登录');
+      }
+      erpCookie = cookie;
+      erpVerifyPending = null;
+      try { fs.writeFileSync(COOKIE_CACHE_PATH, JSON.stringify({ cookie, ts: Date.now() }, null, 2)); } catch (e) { /* 忽略写入失败 */ }
+      console.log('[ERP自动登录] 登录成功，Cookie 已更新并缓存到 erp-cookie.json');
+      return erpCookie;
+    }
+    // result=9 高风险（需人工验证）、result=0/其他异常
+    throw new Error(`快麦自动登录失败：${(json && (json.message || (json.data && json.data.msg))) || ('result=' + json.result)}`);
+  })().finally(() => { erpLoginPromise = null; });
+  return erpLoginPromise;
+}
+
+// 带自动重登的执行包装：首次失败若是登录态问题，重登后重试一次
+async function withErpAuth(fn) {
+  try {
+    return await fn(erpCookie);
+  } catch (e) {
+    if (!isErpAuthError(e) || !canAutoLogin()) throw e;
+    console.warn('[ERP] 检测到登录态失效，尝试自动重新登录：', e.message);
+    await erpLogin();
+    return fn(erpCookie);
+  }
+}
+
 // 用「商品关系信息」接口补真实销量：warehouseStockList 的 sale30Days 恒为 0，
 // 而网页的“30天销量”来自 stock_queryItemRelationInfo（按 sysItemId:sysSkuId:warehouseId 关联）。
 // rows 为库存列表原始行（需含 sysItemId / sysSkuId / wareHouseId），本函数把真实 sale30Days 写回 row。
@@ -165,7 +286,7 @@ async function fetchRelationSales(rows) {
   };
   if (process.env.ERP_TOKEN) headers['Authorization'] = `Bearer ${process.env.ERP_TOKEN}`;
   if (process.env.ERP_API_KEY) headers['X-API-Key'] = process.env.ERP_API_KEY;
-  if (process.env.ERP_COOKIE) headers['Cookie'] = process.env.ERP_COOKIE;
+  if (erpCookie) headers['Cookie'] = erpCookie;
 
   const items = rows
     .map(r => {
@@ -249,7 +370,12 @@ async function fetchErpCount(headers, cid, warehouseIds) {
   }
 }
 
+// 对外入口：登录态失效时自动重登并重试一次
 async function fetchFromErp() {
+  return withErpAuth(() => fetchFromErpInner());
+}
+
+async function fetchFromErpInner() {
   const url = process.env.ERP_API_URL;
   if (!url) throw new Error('未配置 ERP_API_URL，无法获取真实数据。请在 .env 配置真实 ERP 接口地址后重启 server.js');
   const headers = {
@@ -259,7 +385,7 @@ async function fetchFromErp() {
   };
   if (process.env.ERP_TOKEN) headers['Authorization'] = `Bearer ${process.env.ERP_TOKEN}`;
   if (process.env.ERP_API_KEY) headers['X-API-Key'] = process.env.ERP_API_KEY;
-  if (process.env.ERP_COOKIE) headers['Cookie'] = process.env.ERP_COOKIE;
+  if (erpCookie) headers['Cookie'] = erpCookie;
 
   const method = (process.env.ERP_METHOD || 'POST').toUpperCase();
   const pageSize = Math.min(500, Math.max(1, Number(process.env.ERP_PAGE_SIZE) || 500));
@@ -323,8 +449,8 @@ async function fetchFromErp() {
     if (!res.ok) throw new Error(`ERP 接口返回 HTTP ${res.status}`);
     const json = await res.json();
     // 快麦：{ suc:true, result:1, data:{ total, list:[...] } }；suc=false/result=0 视为登录态失效
-    if (json && json.suc === false) throw new Error('ERP 返回 suc=false（登录态可能失效，请重新抓取 Cookie）');
-    if (json && json.result === 901) throw new Error('Cookie 已过期（会话异常，请重新登录），请重新抓取 ERP_COOKIE 到 .env 并重启 server.js');
+    if (json && json.suc === false) throw new Error('ERP 返回 suc=false（登录态失效）');
+    if (json && json.result === 901) throw new Error('Cookie 已过期（会话异常，result=901）');
     if (json && json.result === 0) throw new Error('ERP 返回 result=0（接口调用失败，请检查参数/登录态）');
 
     const arr = (json && json.data && Array.isArray(json.data.list))
@@ -526,13 +652,15 @@ const STOCKIO_BXV = process.env.ERP_STOCKIO_BXV || '2.5.11';
 const STOCKIO_REPORT_ID = process.env.ERP_STOCKIO_REPORT_ID || '68023';
 
 // 简单内存缓存（按 范围+仓库 缓存，避免每次都翻页拉全量）
-const inoutCache = new Map(); // key -> { ts, result }
+const inoutCache = new Map();   // 明细行缓存: rawKey(from|to|wh) -> { ts, rows }
+const inoutAggCache = new Map(); // 聚合缓存: aggKey(rawKey|groupBy) -> { ts, result }
 const INOUT_CACHE_TTL = 10 * 60 * 1000;
+const inoutInflight = new Map(); // rawKey -> Promise（并发去重，同时只拉一份）
 
 // 翻页拉取某时间范围内的全部出入库行
 async function fetchStockIoRows(fromMs, toMs, warehouseId) {
-  const cookie = process.env.ERP_COOKIE;
-  if (!cookie) throw new Error('未配置 ERP_COOKIE，无法拉取出入库数据');
+  const cookie = erpCookie;
+  if (!cookie) throw new Error('未配置 ERP_COOKIE / 自动登录账号，无法拉取出入库数据');
   const headers = {
     'Accept': 'application/json, text/plain, */*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
@@ -556,7 +684,7 @@ async function fetchStockIoRows(fromMs, toMs, warehouseId) {
     itemBrandIdList: '', itemCategoryIdList: '', itemCategoryQuerySetting: '',
     itemClassifyIdList: '', mainSupplierFilter: '0', operationTimeQueryType: 'operation_time',
     operationTypeList: '', operator: '', orderNumberList: '', pageId: '101203',
-    pageNo: 1, pageSize: 200, platformTradeIdList: '', quickTimeSelect: '',
+    pageNo: 1, pageSize: 2000, platformTradeIdList: '', quickTimeSelect: '',
     skuBrandIdList: '', skuCategoryIdList: '', skuClassifyIdList: '', skuShipperIdList: '',
     startTime: String(fromMs), stockInoutTypeList: '',
     storageSectionTypeList: 'STOREHOUSE,PURCHASE,REFUND,DEFECTIVE',
@@ -588,8 +716,8 @@ async function fetchStockIoRows(fromMs, toMs, warehouseId) {
   const cap = 500; // 安全阀：最多 500 页
   while (pageNo <= cap) {
     // 翻页间隔：避免触发「请求过于频繁」限流（首页除外）
-    if (pageNo > 1) await new Promise(r => setTimeout(r, 700));
-    const body = { ...baseForm, pageNo, pageSize: 200 };
+    if (pageNo > 1) await new Promise(r => setTimeout(r, 500));
+    const body = { ...baseForm, pageNo, pageSize: 2000 };
     const json = await fetchOnePage(body);
     const list = (json.data && json.data.list) || [];
     rows.push(...list);
@@ -700,19 +828,48 @@ var i=document.getElementById('pw');
 i.addEventListener('keyup',function(e){if(e.key==='Enter')go();});
 function go(){fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:i.value})})
  .then(function(r){return r.json();})
- .then(function(d){if(d.ok){location.href='/';}else{document.getElementById('err').textContent='口令错误，请重试';}})
+ .then(function(d){if(d.ok){location.href='/';}else{document.getElementById('err').textContent=d.error||'口令错误，请重试';}})
  .catch(function(){document.getElementById('err').textContent='请求失败，请重试';});}
 </script></body></html>`;
+// 登录防爆破：同一 IP 连错 5 次锁定 10 分钟
+const LOGIN_MAX_FAILS = 5, LOGIN_LOCK_MS = 10 * 60 * 1000;
+const loginAttempts = new Map(); // ip -> { fails, lockUntil }
+setInterval(() => { // 定期清理过期记录，防 Map 无限增长
+  const now = Date.now();
+  for (const [ip, rec] of loginAttempts) if (rec.lockUntil <= now && !rec.fails) loginAttempts.delete(ip);
+}, 60 * 1000).unref();
+const clientIp = (req) => {
+  const fwd = req.headers['x-forwarded-for'];
+  if (fwd) return String(fwd).split(',')[0].trim();
+  return (req.socket && req.socket.remoteAddress) || 'unknown';
+};
+
 app.use((req, res, next) => {
   if (!SHARE_PASSWORD || isAuthed(req)) return next();
   if (req.method === 'GET' && req.path === '/login') return res.send(LOGIN_HTML);
   if (req.method === 'POST' && req.path === '/login') {
+    const ip = clientIp(req);
+    const rec = loginAttempts.get(ip);
+    if (rec && rec.lockUntil > Date.now()) {
+      const min = Math.ceil((rec.lockUntil - Date.now()) / 60000);
+      return res.status(429).json({ ok: false, error: `错误次数过多，已锁定，请约 ${min} 分钟后再试` });
+    }
     const pw = (req.body && req.body.password) || '';
     if (pw && pw === SHARE_PASSWORD) {
+      loginAttempts.delete(ip);
       res.setHeader('Set-Cookie', `${AUTH_COOKIE}=${AUTH_TOKEN}; Path=/; HttpOnly; Max-Age=2592000; SameSite=Lax`);
       return res.json({ ok: true });
     }
-    return res.status(401).json({ ok: false, error: '口令错误' });
+    const r = loginAttempts.get(ip) || { fails: 0, lockUntil: 0 };
+    r.fails = (r.fails || 0) + 1;
+    if (r.fails >= LOGIN_MAX_FAILS) {
+      r.lockUntil = Date.now() + LOGIN_LOCK_MS;
+      r.fails = 0;
+      loginAttempts.set(ip, r);
+      return res.status(429).json({ ok: false, error: '错误次数过多，已锁定 10 分钟' });
+    }
+    loginAttempts.set(ip, r);
+    return res.status(401).json({ ok: false, error: `口令错误，还可尝试 ${LOGIN_MAX_FAILS - r.fails} 次` });
   }
   if (req.path.startsWith('/api/')) return res.status(401).json({ ok: false, error: '未登录' });
   return res.redirect('/login');
@@ -733,7 +890,8 @@ app.get('/api/inventory', (req, res) => {
     error: store.lastError,
     mode: SNAPSHOT_MODE ? 'snapshot' : 'erp',
     noCheckNow: NO_CHECK_NOW,
-    noSettingsWrite: NO_SETTINGS_WRITE
+    noSettingsWrite: NO_SETTINGS_WRITE,
+    erpVerify: erpVerifyState()
   });
 });
 
@@ -762,15 +920,13 @@ app.get('/api/inout-stats', async (req, res) => {
   try {
     let { from, to, warehouse, groupBy } = req.query;
     groupBy = (groupBy === 'item') ? 'item' : 'sku'; // 仅允许 sku / item
-    // 默认：最近 6 个月
+    // 默认：本月（1 号 0 点 ~ 月末）
     const now = new Date();
     if (!from) {
-      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
-      from = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      from = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
     }
     if (!to) {
-      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-      to = `${d.getUTCFullYear()}-${String(d.getUTCMonth()).padStart(2, '0')}`;
+      to = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
     }
     // 支持多种写法：YYYY-MM-DD HH:mm:ss / YYYY-MM-DDTHH:mm:ss（秒）
     //               YYYY-MM-DD HH:mm（缺秒补00）/ YYYY-MM-DD（仅日期=当日0点）/ YYYY-MM（整月）
@@ -791,19 +947,45 @@ app.get('/api/inout-stats', async (req, res) => {
     const fromMs = parseRange(from, false);
     const toMs = parseRange(to, true);
     if (fromMs == null || toMs == null) return res.status(400).json({ ok: false, error: 'from/to 格式应为 YYYY-MM-DD HH:mm:ss 或 YYYY-MM' });
-    const wh = warehouse || process.env.ERP_WAREHOUSE_IDS || '116959';
-    const cacheKey = `${fromMs}|${toMs}|${wh}|${groupBy}`;
-    const cached = inoutCache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < INOUT_CACHE_TTL) {
-      return res.json({ ok: true, ...cached.result, cached: true });
-    }
-    const rows = await fetchStockIoRows(fromMs, toMs, wh);
-    const agg = aggregateInOut(rows, groupBy);
-    const result = {
-      from, to, warehouse: wh, rows: rows.length, groupBy,
-      monthList: agg.monthList, styleList: agg.styleList, source: 'erp'
+    // 仓库：分享版（noSettingsWrite）禁止指定，锁定服务端默认仓库；本地可用参数或 .env 配置
+    const wh = (!NO_SETTINGS_WRITE && warehouse) || process.env.ERP_WAREHOUSE_IDS || '116959';
+    // 明细行缓存与聚合缓存分离：切换 groupBy 复用同一份明细，无需重新拉 ERP
+    const rawKey = `${fromMs}|${toMs}|${wh}`;
+    const aggKey = `${rawKey}|${groupBy}`;
+    const buildResult = (rows) => {
+      const agg = aggregateInOut(rows, groupBy);
+      return {
+        from, to, warehouse: wh, rows: rows.length, groupBy,
+        monthList: agg.monthList, styleList: agg.styleList, source: 'erp'
+      };
     };
-    inoutCache.set(cacheKey, { ts: Date.now(), result });
+    // 并发去重拉取：同一范围同时只发一份请求；先查新鲜明细缓存
+    const getRows = () => {
+      const c = inoutCache.get(rawKey);
+      if (c && Date.now() - c.ts < INOUT_CACHE_TTL) return Promise.resolve(c.rows);
+      if (inoutInflight.has(rawKey)) return inoutInflight.get(rawKey);
+      const p = withErpAuth(() => fetchStockIoRows(fromMs, toMs, wh))
+        .then(rows => { inoutCache.set(rawKey, { ts: Date.now(), rows }); return rows; })
+        .finally(() => inoutInflight.delete(rawKey));
+      inoutInflight.set(rawKey, p);
+      return p;
+    };
+    const raw = inoutCache.get(rawKey);
+    const rawFresh = raw && Date.now() - raw.ts < INOUT_CACHE_TTL;
+    const cachedAgg = inoutAggCache.get(aggKey);
+    if (cachedAgg && (rawFresh || Date.now() - cachedAgg.ts < INOUT_CACHE_TTL)) {
+      if (!rawFresh) {
+        // 聚合还在保鲜期但明细已过期：先返回旧数据，后台静默刷新，下次即是新数据
+        getRows().then(rows => {
+          inoutAggCache.set(aggKey, { ts: Date.now(), result: buildResult(rows) });
+          console.log('[inout] 后台刷新完成:', rawKey, rows.length + ' 行');
+        }).catch(e => console.error('[inout] 后台刷新失败:', e.message));
+      }
+      return res.json({ ok: true, ...cachedAgg.result, cached: true });
+    }
+    const rows = await getRows();
+    const result = buildResult(rows);
+    inoutAggCache.set(aggKey, { ts: Date.now(), result });
     res.json({ ok: true, ...result });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -867,6 +1049,43 @@ app.post('/api/settings', (req, res) => {
   }
 });
 
+// 发送快麦登录短信验证码（需先有一次 login 触发了 login_verify_random）
+app.post('/api/erp-verify/send', async (req, res) => {
+  try {
+    if (!erpVerifyPending) return res.status(400).json({ ok: false, error: '当前没有待验证的登录（未触发短信验证）' });
+    const r = await fetch(ERP_ORIGIN + '/account/getPhoneCode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest', 'Referer': ERP_ORIGIN + '/login.html' },
+      body: new URLSearchParams({ accountId: erpVerifyPending.accountId, companyId: erpVerifyPending.companyId }).toString(),
+      signal: AbortSignal.timeout(15000)
+    });
+    const j = await r.json().catch(() => ({}));
+    const ok = j && j.data && j.data.status === 'success';
+    console.log('[ERP验证码] 发送结果:', ok ? 'success' : JSON.stringify(j).slice(0, 200), ok && j.data.phoneNum ? `(发送至 ${j.data.phoneNum})` : '');
+    res.json(ok ? { ok: true, phone: j.data.phoneNum } : { ok: false, error: (j.data && (j.data.message || j.data.msg)) || j.message || '发送失败' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// 提交短信验证码完成登录（登录成功即换新 Cookie 并恢复自动拉取）
+app.post('/api/erp-verify/confirm', async (req, res) => {
+  try {
+    const code = String((req.body && req.body.code) || '').trim();
+    if (!code) return res.status(400).json({ ok: false, error: '请输入验证码' });
+    if (!erpVerifyPending) return res.status(400).json({ ok: false, error: '当前没有待验证的登录' });
+    try {
+      await erpLogin(code);
+      const { newAlerts } = await checkNow().catch(() => ({ newAlerts: 0 })); // 登录成功立即刷新一次数据
+      res.json({ ok: true, newAlerts });
+    } catch (e) {
+      res.status(400).json({ ok: false, error: e.message });
+    }
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 /* ----------------------------- 定时调度 ----------------------------- */
 let timer = null;
 function startScheduler() {
@@ -885,6 +1104,9 @@ app.listen(PORT, () => {
   if (SNAPSHOT_MODE) {
     console.log('[快照模式] 未检测到 .env ERP 配置，仅展示 store.json 库存快照（不拉取 ERP、不启动调度）');
   } else {
+    if (!erpCookie && canAutoLogin()) {
+      erpLogin().catch(e => console.error('[启动自动登录失败]', e.message)); // 无 Cookie 时先自动登录
+    }
     checkNow().catch(e => console.error('[启动检查失败]', e));       // 启动即检查一次，保证看板有数据
     startScheduler();
   }

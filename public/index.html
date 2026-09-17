@@ -98,6 +98,7 @@
     .btn:disabled { opacity: .55; cursor: default; }
     .btn.ghost { background: #eef2fb; color: var(--primary); }
     .btn.ghost.on { background: var(--primary); color: #fff; }
+    .btn.sm, .btn.ghost.sm { padding: 5px 12px; font-size: 13px; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
     th { color: var(--muted); font-weight: 600; background: #fafbfe; }
@@ -158,6 +159,42 @@
     .banner code { background: #fff; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
     .actionbar .btn { margin-left: auto; }
     small.code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+    /* ============ 手机端适配（≤768px） ============ */
+    @media (max-width: 768px) {
+      body { font-size: 13px; }
+      /* 顶栏：标题与导航上下堆叠，导航横向滑动 */
+      header { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; }
+      header .sub { display: none; }
+      nav { margin-left: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      nav::-webkit-scrollbar { display: none; }
+      nav button { flex: 0 0 auto; padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+      .wrap { margin: 12px auto; padding: 0 10px; }
+      /* 统计卡：4 列变 2 列 */
+      .cards { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+      .stat { padding: 12px 14px; }
+      .stat .v { font-size: 20px; }
+      /* 面板允许整体横向滑动，宽表格不压扁、左右滑动查看 */
+      .panel { padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; min-height: 160px; }
+      .panel h2 { flex-wrap: wrap; gap: 4px 10px; }
+      .panel h2 .tip { width: 100%; }
+      .actionbar { flex-wrap: wrap; gap: 8px; }
+      .search-input { width: 100%; max-width: 240px; }
+      table { min-width: 560px; }
+      .inout-table { min-width: 760px; }
+      th, td { padding: 8px; font-size: 12px; }
+      .pager { gap: 6px; }
+      .inline { gap: 12px; }
+      .field input { width: 100%; }
+      .inout-filter-row { gap: 10px; }
+      .inout-filter-row .el-date-editor { width: 145px; }
+      .inout-filter-row .wh-input { width: 100px; }
+      /* Element 日期面板在小屏上不超出屏幕 */
+      .el-picker-panel.el-date-picker { width: 92vw !important; max-width: 360px !important; }
+      .el-picker-panel { max-width: 96vw !important; }
+      .toast { bottom: 16px; max-width: 90vw; font-size: 13px; }
+      .banner { font-size: 12px; padding: 8px 12px; }
+    }
   </style>
 </head>
 <body>
@@ -184,6 +221,14 @@
     </div>
     <div class="banner mock" v-if="!isSnapshot && (noCheckNow || noSettingsWrite)">
       🔗 当前为<strong>分享版</strong>：数据按设定频率自动更新{{ noCheckNow ? '，不支持手动「立即检查」' : '' }}{{ noSettingsWrite ? '，设置仅可查看' : '' }}。
+    </div>
+    <div class="banner error" v-if="erpVerifyPending">
+      🔐 快麦自动登录触发<strong>短信验证</strong>：点击「发送验证码」，输入主账号手机收到的验证码即可完成登录（通常只在换环境登录时出现一次）。
+      <span style="margin-left:8px">
+        <button class="btn ghost sm" :disabled="erpVerifySending" @click="sendErpVerifyCode">{{ erpVerifySending ? '发送中…' : '发送验证码' }}</button>
+        <input class="jump-input" style="width:110px;margin:0 6px" v-model="erpVerifyCode" placeholder="验证码" @keyup.enter="confirmErpVerify" />
+        <button class="btn sm" :disabled="erpVerifySending" @click="confirmErpVerify">确认登录</button>
+      </span>
     </div>
 
     <!-- ============ 库存看板 ============ -->
@@ -422,10 +467,6 @@
                 :disabled-date="disabledFutureDate" :disabled-hours="disabledHours" :disabled-minutes="disabledMinutes" :disabled-seconds="disabledSeconds"
                 placeholder="结束时间" style="width:210px !important" />
             </div>
-            <div class="field" style="margin:0">
-              <label>仓库ID（空 = 全部）</label>
-              <input type="text" v-model="inoutWh" placeholder="116959" style="width:120px !important" />
-            </div>
             <button class="btn" :disabled="inoutLoading" @click="loadInout">{{ inoutLoading ? '统计中…' : '统计' }}</button>
           </div>
         </div>
@@ -623,6 +664,31 @@
         const isSnapshot = computed(() => appMode.value === 'snapshot');
         const noCheckNow = ref(false);      // 分享版：禁用「立即检查」（数据仍自动定时刷新）
         const noSettingsWrite = ref(false); // 分享版：禁用「保存设置」（设置页仅可查看）
+        const erpVerifyPending = ref(false); // 快麦风控要求短信验证（自动登录流程中）
+        const erpVerifyCode = ref('');
+        const erpVerifySending = ref(false);
+        async function sendErpVerifyCode() {
+          erpVerifySending.value = true;
+          try {
+            const r = await api('/api/erp-verify/send', { method: 'POST' });
+            showToast(r.ok ? `验证码已发送至主账号手机 ${r.phone || ''}` : (r.error || '发送失败'));
+          } catch (e) { showToast('发送失败：' + e.message); }
+          erpVerifySending.value = false;
+        }
+        async function confirmErpVerify() {
+          if (!erpVerifyCode.value.trim()) { showToast('请先输入收到的验证码'); return; }
+          erpVerifySending.value = true;
+          try {
+            const r = await api('/api/erp-verify/confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: erpVerifyCode.value.trim() }) });
+            if (r.ok) {
+              showToast('登录成功，数据已恢复自动更新');
+              erpVerifyPending.value = false;
+              erpVerifyCode.value = '';
+              await loadInventory();
+            } else { showToast(r.error || '验证失败'); }
+          } catch (e) { showToast('验证失败：' + e.message); }
+          erpVerifySending.value = false;
+        }
 
         // 预警分类：零库存 与 低于30天销量 互斥（零库存优先）
         // onlyActive：默认勾选，仅看「有销量的在售品」（activeStatus===1 且 sales30>0），隐藏无销量/未上架 SKU
@@ -741,6 +807,7 @@
           appMode.value = data.mode || 'erp';
           noCheckNow.value = data.noCheckNow === true;
           noSettingsWrite.value = data.noSettingsWrite === true;
+          erpVerifyPending.value = !!(data.erpVerify && data.erpVerify.pending);
         }
 
         // 状态变化记录（跌破/恢复 + 库存变动），后端按时间倒序存于 store.alerts
@@ -970,7 +1037,7 @@
         async function loadInout() {
           inoutLoading.value = true; inoutError.value = '';
           try {
-            if (!inoutFrom.value || !inoutTo.value) defaultInoutRange(); // 清空后回退本月默认，避免后端兜底成最近6个月
+            if (!inoutFrom.value || !inoutTo.value) defaultInoutRange(); // 清空后回退本月默认，避免后端兜底
             const params = new URLSearchParams();
             const fromStr = inoutFrom.value ? String(inoutFrom.value).replace('T', ' ') : '';
             let toStr = inoutTo.value ? String(inoutTo.value).replace('T', ' ') : '';
@@ -1017,6 +1084,7 @@
           styleSearch, styleSort, styleSize, stylePage, styleJump, filteredStyles, pagedStyles, styleTotalPages, goStyle,
           loadInout, setGroupBy, exportCsv,
           noCheckNow, noSettingsWrite,
+          erpVerifyPending, erpVerifyCode, erpVerifySending, sendErpVerifyCode, confirmErpVerify,
           fmtTime, checkNow, saveSettings, switchTab
         };
       }
