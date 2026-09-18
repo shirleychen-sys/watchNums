@@ -195,6 +195,16 @@ const erpVerifyState = () => ({
   ts: erpVerifyPending && erpVerifyPending.ts
 });
 
+// 固定设备 ID：首次生成后持久化，之后每次登录都上报同一 ID，
+// 让快麦风控将本机识别为「熟悉设备」，减少触发短信验证
+const DEVICE_PATH = path.join(__dirname, 'erp-device.json');
+let ERP_DEVICE_ID = '';
+try { ERP_DEVICE_ID = JSON.parse(fs.readFileSync(DEVICE_PATH, 'utf8')).deviceId || ''; } catch (e) { /* 首次 */ }
+if (!ERP_DEVICE_ID) {
+  ERP_DEVICE_ID = crypto.randomUUID();
+  try { fs.writeFileSync(DEVICE_PATH, JSON.stringify({ deviceId: ERP_DEVICE_ID, ts: Date.now() }, null, 2)); } catch (e) { /* 忽略写入失败 */ }
+}
+
 async function erpLogin(smsCode = '') {
   if (!canAutoLogin()) throw new Error('未配置自动登录（需要 ERP_COMPANY / ERP_USERNAME / ERP_PASSWORD）');
   if (erpLoginPromise) return erpLoginPromise; // 已有登录在进行，复用
@@ -213,7 +223,7 @@ async function erpLogin(smsCode = '') {
         userName: ERP_LOGIN_USER,
         password: md5Upper(ERP_LOGIN_PASSWORD),
         salt: String(Date.now()),
-        validationCode: '', phoneVerifyCode: smsCode || '', deviceId: '', unionId: '', scanSource: ''
+        validationCode: '', phoneVerifyCode: smsCode || '', deviceId: ERP_DEVICE_ID, unionId: '', scanSource: ''
       }).toString(),
       signal: AbortSignal.timeout(15000)
     });
