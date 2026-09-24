@@ -286,9 +286,10 @@ async function fetchFromErpInner() {
   //       warehouseIds 限定仓库（留空=全部）。其余多为空过滤器，照原样带着以贴合真实请求。
   // 重要：该接口只认 application/x-www-form-urlencoded，发 JSON 时 cId 会被直接忽略！
   const cid = process.env.ERP_CID || '';
-  // 仓库口径与快麦「库存列表」页面一致：.env 的 ERP_WAREHOUSE_IDS 留空 = 不限仓库（全部仓库），
-  // 填了才只拉该仓库（如 116959=义乌大货仓）。不再强制默认 116959。
-  const warehouseIds = (process.env.ERP_WAREHOUSE_IDS || '').trim();
+  // 库存列表（含「低于30天销量」「可能需要排单」）只统计主仓库：116959（义乌大货仓）。
+  // .env 未配置或留空时也强制用 116959，防止误拉全部仓库。
+  // 注：只有「出入库统计」统计全部仓库（口径对齐快麦出入库统计页），不受这里影响。
+  const warehouseIds = (process.env.ERP_WAREHOUSE_IDS || '').trim() || '116959';
   const baseParams = {
     api_name: 'stock_query_warehouseStockList',
     autoUpload: '', catIds: '', brands: '',
