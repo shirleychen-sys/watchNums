@@ -959,6 +959,8 @@
         // 说明：CSV 不支持列宽，Excel 打开会按默认窄宽截断长文本；
         // 故导出为带 <col width> 列宽的 Excel(.xls)，每格完整显示。
         // downloadXls：通用导出（出入库统计与排单列表共用同一套表格下载样式）
+        // 导出统一字体：微软雅黑（表头 + 全部单元格）
+        const XLS_FONT = "font-family:'Microsoft YaHei','微软雅黑',sans-serif;font-size:10pt";
         function downloadXls(filename, header, rows, widths) {
           const esc = v => {
             const s = (v == null ? '' : String(v));
@@ -967,9 +969,10 @@
               : s;
           };
           const colgroup = '<colgroup>' + widths.map(w => `<col width="${w}" />`).join('') + '</colgroup>';
-          const thead = '<thead><tr>' + header.map(h => `<th>${esc(h)}</th>`).join('') + '</tr></thead>';
-          const tbody = '<tbody>' + rows.map(r => '<tr>' + r.map(c => `<td>${esc(c)}</td>`).join('') + '</tr>').join('') + '</tbody>';
-          const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body><table border="1">' + colgroup + thead + tbody + '</table></body></html>';
+          const thead = '<thead><tr>' + header.map(h => `<th style="${XLS_FONT}">${esc(h)}</th>`).join('') + '</tr></thead>';
+          const tbody = '<tbody>' + rows.map(r => '<tr>' + r.map(c => `<td style="${XLS_FONT}">${esc(c)}</td>`).join('') + '</tr>').join('') + '</tbody>';
+          const styleTag = `<style>table{border-collapse:collapse}td,th{${XLS_FONT}}</style>`;
+          const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8">' + styleTag + '</head><body style="' + XLS_FONT + '"><table border="1">' + colgroup + thead + tbody + '</table></body></html>';
           const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
           const a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
